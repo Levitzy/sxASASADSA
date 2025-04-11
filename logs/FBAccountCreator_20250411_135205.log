@@ -1,0 +1,47 @@
+2025-04-11 13:52:05,845 - INFO - Logger initialized. Log file: C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\logs\FBAccountCreator_20250411_135205.log
+2025-04-11 13:52:05,846 - INFO - Starting Facebook account creator
+2025-04-11 13:52:05,846 - INFO - Required folders created
+2025-04-11 13:52:05,847 - INFO - Fetching proxies from API
+2025-04-11 13:52:08,958 - INFO - Saved proxy list to C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\proxies\proxy_list.txt
+2025-04-11 13:52:08,959 - INFO - Loaded 10 proxies from file
+2025-04-11 13:52:08,960 - INFO - Selected proxy: 154.36.110.199:6853
+2025-04-11 13:52:08,960 - INFO - Using proxy: 154.36.110.199:6853
+2025-04-11 13:52:08,961 - INFO - Generated user data for Sofia Harris
+2025-04-11 13:52:30,610 - INFO - Valid email provided: verbal.ferret.pwua@letterhaven.net
+2025-04-11 13:52:30,611 - INFO - Session configured with proxy URL: http://vazobmnp:bzcazvl7en9k@154.36.110.199:6853
+2025-04-11 13:52:30,611 - INFO - Starting Facebook account creation process...
+2025-04-11 13:52:30,612 - INFO - Visiting Facebook mobile homepage...
+2025-04-11 13:52:44,212 - WARNING - Attempt 1/3 failed: Exceeded 30 redirects.
+2025-04-11 13:52:44,213 - INFO - Retrying in 1.55 seconds...
+2025-04-11 13:52:57,281 - WARNING - Attempt 2/3 failed: Exceeded 30 redirects.
+2025-04-11 13:52:57,282 - INFO - Retrying in 2.51 seconds...
+2025-04-11 13:53:11,155 - WARNING - Attempt 3/3 failed: Exceeded 30 redirects.
+2025-04-11 13:53:11,156 - ERROR - All 3 attempts failed for URL: https://m.facebook.com/
+2025-04-11 13:53:11,156 - ERROR - Error during mobile registration: Exceeded 30 redirects.
+2025-04-11 13:53:11,159 - ERROR - Traceback (most recent call last):
+  File "c:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\facebook\registration.py", line 71, in _mobile_registration
+    initial_response = self.session.get(FB_MOBILE_HOME)
+  File "c:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\facebook\session.py", line 109, in get
+    response = self.session.get(
+        url,
+    ...<2 lines>...
+        timeout=timeout
+    )
+  File "C:\Users\FLORES\AppData\Local\Programs\Python\Python313\Lib\site-packages\requests\sessions.py", line 602, in get
+    return self.request("GET", url, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\FLORES\AppData\Local\Programs\Python\Python313\Lib\site-packages\requests\sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\FLORES\AppData\Local\Programs\Python\Python313\Lib\site-packages\requests\sessions.py", line 724, in send
+    history = [resp for resp in gen]
+                                ^^^
+  File "C:\Users\FLORES\AppData\Local\Programs\Python\Python313\Lib\site-packages\requests\sessions.py", line 191, in resolve_redirects
+    raise TooManyRedirects(
+        f"Exceeded {self.max_redirects} redirects.", response=resp
+    )
+requests.exceptions.TooManyRedirects: Exceeded 30 redirects.
+
+2025-04-11 13:53:11,160 - ERROR - Account creation failed
+2025-04-11 13:53:11,161 - INFO - Saving partial account info with cookies
+2025-04-11 13:53:11,162 - INFO - Partial account information saved to C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\accounts\fb_account_partial_o1mnMiEa.json
+2025-04-11 13:53:11,162 - WARNING - Created partial account.

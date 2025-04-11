@@ -1,0 +1,99 @@
+2025-04-11 19:57:01,332 - INFO - Logger initialized. Log file: C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\logs\FBAccountCreator_20250411_195701.log
+2025-04-11 19:57:01,332 - INFO - Starting Facebook account creator
+2025-04-11 19:57:01,333 - INFO - Required folders created
+2025-04-11 19:57:01,334 - INFO - Loading working proxies from: C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\proxies\working_proxies.txt
+2025-04-11 19:57:01,334 - INFO - Loaded 5 working proxies from file
+2025-04-11 19:57:01,335 - INFO - Loaded 5 working proxies
+2025-04-11 19:57:01,335 - INFO - Loaded 10 proxies from file
+2025-04-11 19:57:01,336 - INFO - Also loaded 10 backup proxies
+2025-04-11 19:57:01,336 - INFO - Testing 5 proxies out of 10
+2025-04-11 19:57:01,337 - INFO - Testing proxy 1/5: 154.36.110.199:6853
+2025-04-11 19:57:03,402 - INFO - Testing proxy 2/5: 185.199.228.220:7300
+2025-04-11 19:57:05,891 - INFO - Testing proxy 3/5: 161.123.152.115:6360
+2025-04-11 19:57:07,974 - INFO - Testing proxy 4/5: 216.10.27.159:6837
+2025-04-11 19:57:09,840 - INFO - Testing proxy 5/5: 173.211.0.148:6641
+2025-04-11 19:57:11,349 - INFO - Testing completed. Found 5 working proxies.
+2025-04-11 19:57:11,350 - INFO - Saved 5 working proxies to C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\proxies\working_proxies.txt
+2025-04-11 19:57:11,350 - INFO - Generated user data for Charlie Lewis
+2025-04-11 19:57:38,778 - INFO - Valid email provided: jubiar@asd.jubiar
+2025-04-11 19:57:38,778 - INFO - Selected working proxy: 154.36.110.199:6853
+2025-04-11 19:57:38,778 - INFO - Attempt 1/3 using proxy: 154.36.110.199:6853
+2025-04-11 19:57:38,779 - INFO - Session configured with proxy URL: http://vazobmnp:bzcazvl7en9k@154.36.110.199:6853
+2025-04-11 19:57:38,779 - INFO - Starting Facebook account creation process...
+2025-04-11 19:57:38,780 - INFO - Warming up session with natural browsing patterns...
+2025-04-11 19:57:40,446 - INFO - Found LSD token: AVrMPxYsP1...
+2025-04-11 19:57:40,446 - INFO - GET https://m.facebook.com/ - Status: 200
+2025-04-11 19:57:40,447 - INFO - Found LSD token: AVrMPxYsP1...
+2025-04-11 19:57:40,447 - INFO - Stored datr cookie: sgP5ZzcZZRIEz5Eo1D-42Qio
+2025-04-11 19:57:46,617 - INFO - GET https://m.facebook.com/policies/ - Status: 200
+2025-04-11 19:57:50,272 - INFO - Session warm-up completed
+2025-04-11 19:57:50,272 - INFO - Visiting Facebook mobile homepage...
+2025-04-11 19:57:50,807 - INFO - Found LSD token: AVrMPxYsfk...
+2025-04-11 19:57:50,807 - INFO - GET https://m.facebook.com/ - Status: 200
+2025-04-11 19:57:50,808 - INFO - Found LSD token: AVrMPxYsfk...
+2025-04-11 19:57:52,597 - INFO - Mobile homepage accessed successfully: 200
+2025-04-11 19:57:54,107 - INFO - Trying signup URL: https://m.facebook.com/reg/
+2025-04-11 19:57:55,330 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0bMZZTRSiJifDdpH5&refsrc=deprecated&_rdr
+2025-04-11 19:57:55,330 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:57:56,608 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0p3VVNSlJy6Qe3Ixb&refsrc=deprecated&_rdr
+2025-04-11 19:57:56,608 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:57:57,874 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0QseSWQvzYNkDniRy&refsrc=deprecated&_rdr
+2025-04-11 19:57:57,875 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:57:59,136 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0jqQmRNrtxS6HvJoj&refsrc=deprecated&_rdr
+2025-04-11 19:57:59,137 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:00,411 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0bx1XmmZ640P5In7m&refsrc=deprecated&_rdr
+2025-04-11 19:58:00,412 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:01,675 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0xpRahRxr0xHKP8j7&refsrc=deprecated&_rdr
+2025-04-11 19:58:01,675 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:02,944 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0KHek4CJx75awWeDR&refsrc=deprecated&_rdr
+2025-04-11 19:58:02,945 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:04,210 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0JSPey0L4fiTp6G5K&refsrc=deprecated&_rdr
+2025-04-11 19:58:04,211 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:05,493 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0AA2otrJsPVNAWBik&refsrc=deprecated&_rdr
+2025-04-11 19:58:05,494 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:06,762 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_09sR0dDx4H2zceaCk&refsrc=deprecated&_rdr
+2025-04-11 19:58:06,762 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:08,048 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0zvphgEnAj9zfNMLP&refsrc=deprecated&_rdr
+2025-04-11 19:58:08,049 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:09,322 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_015geqz3RQp8JbUJw&refsrc=deprecated&_rdr
+2025-04-11 19:58:09,323 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:10,595 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0uNO0IgnLD09Unwif&refsrc=deprecated&_rdr
+2025-04-11 19:58:10,596 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:11,873 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0RLmNtiyRjEAFN9fy&refsrc=deprecated&_rdr
+2025-04-11 19:58:11,873 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:13,139 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0Ge4TFkcghwSF9KDQ&refsrc=deprecated&_rdr
+2025-04-11 19:58:13,140 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:14,425 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0ymuyyT33r4kkzzJq&refsrc=deprecated&_rdr
+2025-04-11 19:58:14,426 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:15,700 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_01cLg99faLQDm0s62&refsrc=deprecated&_rdr
+2025-04-11 19:58:15,700 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:16,964 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0CniiB19r9gXsLWNR&refsrc=deprecated&_rdr
+2025-04-11 19:58:16,964 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:18,246 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0O9s5TDy2MoHSDEda&refsrc=deprecated&_rdr
+2025-04-11 19:58:18,246 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:19,514 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0R31vXAEdHF6Iu8xz&refsrc=deprecated&_rdr
+2025-04-11 19:58:19,514 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:20,789 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0kqctQP6DIKQ1pp4g&refsrc=deprecated&_rdr
+2025-04-11 19:58:20,790 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:22,066 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0PYJcKl8Quz5XMUkf&refsrc=deprecated&_rdr
+2025-04-11 19:58:22,066 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:23,334 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0yRTIVS00nEHPzvMX&refsrc=deprecated&_rdr
+2025-04-11 19:58:23,335 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:24,612 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0hpIq6yKwtuW29sIV&refsrc=deprecated&_rdr
+2025-04-11 19:58:24,613 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:25,890 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0LcAwslAHZZLtu37E&refsrc=deprecated&_rdr
+2025-04-11 19:58:25,890 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:27,155 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0ThxXLDDWEqRyp6Ao&refsrc=deprecated&_rdr
+2025-04-11 19:58:27,155 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:28,425 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0foHmq2aErnu9uKtT&refsrc=deprecated&_rdr
+2025-04-11 19:58:28,425 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:29,699 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0K6tJeUlMzXzi3lqJ&refsrc=deprecated&_rdr
+2025-04-11 19:58:29,699 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:30,973 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0g2qeW8FhBXz3f7cc&refsrc=deprecated&_rdr
+2025-04-11 19:58:30,973 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:32,243 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0acMTZg0hQIKS3NFR&refsrc=deprecated&_rdr
+2025-04-11 19:58:32,243 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:33,506 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0lpVeQmivc1QkLJj9&refsrc=deprecated&_rdr
+2025-04-11 19:58:33,507 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/
+2025-04-11 19:58:34,798 - INFO - Detected Facebook app redirect: fbredirect://m.facebook.com/?uri=https%3A%2F%2Fm.facebook.com%2Freg%2F&wtsid=rdr_0w52bQoCNPoNqL02s&refsrc=deprecated&_rdr
+2025-04-11 19:58:34,799 - INFO - Extracted web URL from app redirect: https://m.facebook.com/reg/

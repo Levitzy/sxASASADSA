@@ -1,0 +1,51 @@
+{
+  "success": false,
+  "partial": true,
+  "first_name": "Sofia",
+  "last_name": "Harris",
+  "email": "verbal.ferret.pwua@letterhaven.net",
+  "email_password": "",
+  "fb_password": "GdSLP7fkQ?S.",
+  "gender": "Male",
+  "birth_date": "9/10/1983",
+  "creation_time": "2025-04-11T13:53:11.161417",
+  "cookies": [
+    {
+      "key": "datr",
+      "value": "H674ZwZcjPnWPahyObcZdvYg",
+      "domain": "facebook.com",
+      "path": "/",
+      "hostOnly": false,
+      "creation": "2025-04-11T13:53:11.161389Z",
+      "lastAccessed": "2025-04-11T13:53:11.161389Z"
+    },
+    {
+      "key": "ps_l",
+      "value": "1",
+      "domain": "facebook.com",
+      "path": "/",
+      "hostOnly": false,
+      "creation": "2025-04-11T13:53:11.161389Z",
+      "lastAccessed": "2025-04-11T13:53:11.161389Z"
+    },
+    {
+      "key": "ps_n",
+      "value": "1",
+      "domain": "facebook.com",
+      "path": "/",
+      "hostOnly": false,
+      "creation": "2025-04-11T13:53:11.161389Z",
+      "lastAccessed": "2025-04-11T13:53:11.161389Z"
+    },
+    {
+      "key": "sb",
+      "value": "H674Z1oJtCgaHu4sNHFqXZ0q",
+      "domain": "facebook.com",
+      "path": "/",
+      "hostOnly": false,
+      "creation": "2025-04-11T13:53:11.161389Z",
+      "lastAccessed": "2025-04-11T13:53:11.161389Z"
+    }
+  ],
+  "cookie_string": "datr=H674ZwZcjPnWPahyObcZdvYg; sb=H674Z1oJtCgaHu4sNHFqXZ0q; ps_l=1; ps_n=1"
+}

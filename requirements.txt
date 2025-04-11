@@ -1,0 +1,6 @@
+
+requests
+beautifulsoup4
+urllib3
+
+smtplabs_EnaC7GfTpeDkrWtcRh2uB62zZpvsh6uWjvzt5rth7toyGCMV

@@ -1,0 +1,53 @@
+2025-04-11 14:43:33,318 - INFO - Logger initialized. Log file: C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\logs\FBAccountCreator_20250411_144333.log
+2025-04-11 14:43:33,319 - INFO - Starting Facebook account creator
+2025-04-11 14:43:33,319 - INFO - Required folders created
+2025-04-11 14:43:33,320 - INFO - Loading working proxies from: C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\proxies\working_proxies.txt
+2025-04-11 14:43:33,321 - INFO - Loaded 5 working proxies from file
+2025-04-11 14:43:33,321 - INFO - Loaded 5 working proxies
+2025-04-11 14:43:33,322 - INFO - Loaded 10 proxies from file
+2025-04-11 14:43:33,322 - INFO - Also loaded 10 backup proxies
+2025-04-11 14:43:33,323 - INFO - Testing 5 proxies out of 10
+2025-04-11 14:43:33,323 - INFO - Testing proxy 1/5: 161.123.152.115:6360
+2025-04-11 14:43:35,794 - INFO - Testing proxy 2/5: 38.153.152.244:9594
+2025-04-11 14:43:37,863 - INFO - Testing proxy 3/5: 185.199.228.220:7300
+2025-04-11 14:43:40,474 - INFO - Testing proxy 4/5: 185.199.229.156:7492
+2025-04-11 14:43:42,969 - INFO - Testing proxy 5/5: 185.199.231.45:8382
+2025-04-11 14:43:45,482 - INFO - Testing completed. Found 5 working proxies.
+2025-04-11 14:43:45,483 - INFO - Saved 5 working proxies to C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\proxies\working_proxies.txt
+2025-04-11 14:43:45,484 - INFO - Generated user data for Phoenix White
+2025-04-11 14:44:37,867 - INFO - Valid email provided: hurt.kingfisher.whti@letterhaven.net
+2025-04-11 14:44:37,867 - INFO - Selected working proxy: 185.199.228.220:7300
+2025-04-11 14:44:37,867 - INFO - Attempt 1/3 using proxy: 185.199.228.220:7300
+2025-04-11 14:44:37,868 - INFO - Session configured with proxy URL: http://vazobmnp:bzcazvl7en9k@185.199.228.220:7300
+2025-04-11 14:44:37,869 - INFO - Starting Facebook account creation process...
+2025-04-11 14:44:37,870 - INFO - Warming up session with natural browsing patterns...
+2025-04-11 14:44:40,560 - INFO - GET https://m.facebook.com/ - Status: 200
+2025-04-11 14:44:40,562 - INFO - Stored datr cookie: Vrr4Z3Ss5prIPSo9Ubpr0E0P
+2025-04-11 14:44:44,923 - INFO - GET https://m.facebook.com/policies/ - Status: 200
+2025-04-11 14:44:48,423 - INFO - Session warm-up completed
+2025-04-11 14:44:48,423 - INFO - Visiting Facebook mobile homepage...
+2025-04-11 14:44:49,678 - INFO - GET https://m.facebook.com/ - Status: 200
+2025-04-11 14:44:50,814 - INFO - Mobile homepage accessed successfully: 200
+2025-04-11 14:44:52,788 - INFO - Trying signup URL: https://m.facebook.com/reg/
+2025-04-11 14:44:55,273 - INFO - GET https://m.facebook.com/reg/ - Status: 200
+2025-04-11 14:44:56,915 - INFO - Signup page https://m.facebook.com/reg/ accessed successfully: 200
+2025-04-11 14:44:56,929 - WARNING - No registration form found at https://m.facebook.com/reg/
+2025-04-11 14:44:56,929 - INFO - Trying signup URL: https://m.facebook.com/reg/submit/
+2025-04-11 14:45:00,003 - INFO - Found LSD token: AVq-zEA5QL...
+2025-04-11 14:45:00,004 - INFO - GET https://m.facebook.com/reg/submit/ - Status: 200
+2025-04-11 14:45:00,004 - INFO - Found LSD token: AVq-zEA5QL...
+2025-04-11 14:45:02,336 - INFO - Signup page https://m.facebook.com/reg/submit/ accessed successfully: 200
+2025-04-11 14:45:02,355 - INFO - Found registration form with selector: form[id="mobile-reg-form"]
+2025-04-11 14:45:02,355 - INFO - Found registration form at https://m.facebook.com/reg/submit/
+2025-04-11 14:45:02,356 - INFO - Registration form action URL: https://m.facebook.com/reg/submit/?privacy_mutation_token=eyJ0eXBlIjowLCJjcmVhdGlvbl90aW1lIjoxNzQ0MzUzODk4LCJjYWxsc2l0ZV9pZCI6OTA3OTI0NDAyOTQ4MDU4fQ%3D%3D&multi_step_form=1&skip_suma=0&shouldForceMTouch=1
+2025-04-11 14:45:02,360 - INFO - Simulating human form filling...
+2025-04-11 14:45:20,725 - INFO - POST https://m.facebook.com/reg/submit/?privacy_mutation_token=eyJ0eXBlIjowLCJjcmVhdGlvbl90aW1lIjoxNzQ0MzUzODk4LCJjYWxsc2l0ZV9pZCI6OTA3OTI0NDAyOTQ4MDU4fQ%3D%3D&multi_step_form=1&skip_suma=0&shouldForceMTouch=1 - Status: 200
+2025-04-11 14:45:23,036 - INFO - Registration response status: 200
+2025-04-11 14:45:23,036 - INFO - Final URL after registration: https://m.facebook.com/login/save-device/?login_source=account_creation&wtsid=rdr_0mpFB7dfbJ1lcPPy0&_rdr#_=_
+2025-04-11 14:45:26,037 - INFO - Found c_user cookie: 61575272903995. Registration successful!
+2025-04-11 14:45:26,038 - INFO - Finalizing account creation...
+2025-04-11 14:45:26,038 - INFO - Account created successfully! User ID: 61575272903995
+2025-04-11 14:45:26,040 - INFO - Account information saved to C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\accounts\fb_account_61575272903995_info.json
+2025-04-11 14:45:26,041 - INFO - Cookies saved to C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\accounts\fb_account_61575272903995_cookies.json
+2025-04-11 14:45:26,041 - INFO - Account creation attempt 1 successful
+2025-04-11 14:45:26,042 - INFO - Account creation successful!

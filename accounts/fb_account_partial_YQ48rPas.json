@@ -1,0 +1,69 @@
+{
+  "success": false,
+  "partial": true,
+  "first_name": "Sage",
+  "last_name": "Moore",
+  "email": "jubiar@asd.jubiar",
+  "email_password": "biar136584130350",
+  "fb_password": "bq+2Ap-u3c!8",
+  "gender": "Female",
+  "birth_date": "1/9/1989",
+  "creation_time": "2025-04-11T19:56:00.136469",
+  "cookies": [
+    {
+      "key": "datr",
+      "value": "GgP5Z26_5cBQPUyH72RaUy4p",
+      "domain": "facebook.com",
+      "path": "/",
+      "hostOnly": false,
+      "creation": "2025-04-11T19:56:00.136429Z",
+      "lastAccessed": "2025-04-11T19:56:00.136429Z"
+    },
+    {
+      "key": "fr",
+      "value": "0OuRTo5gEesaR7ruV..Bn-QMa..AAA.0.0.Bn-QMq.AWdZxSIv1uUvRyAIeEkmKxubMXw",
+      "domain": "facebook.com",
+      "path": "/",
+      "hostOnly": false,
+      "creation": "2025-04-11T19:56:00.136429Z",
+      "lastAccessed": "2025-04-11T19:56:00.136429Z"
+    },
+    {
+      "key": "ps_l",
+      "value": "1",
+      "domain": "facebook.com",
+      "path": "/",
+      "hostOnly": false,
+      "creation": "2025-04-11T19:56:00.136429Z",
+      "lastAccessed": "2025-04-11T19:56:00.136429Z"
+    },
+    {
+      "key": "ps_n",
+      "value": "1",
+      "domain": "facebook.com",
+      "path": "/",
+      "hostOnly": false,
+      "creation": "2025-04-11T19:56:00.136429Z",
+      "lastAccessed": "2025-04-11T19:56:00.136429Z"
+    },
+    {
+      "key": "rs",
+      "value": "9%7C1%7C1989%7C1%7C%7CSage%7CMoore%7CSage+Moore",
+      "domain": "facebook.com",
+      "path": "/",
+      "hostOnly": false,
+      "creation": "2025-04-11T19:56:00.136429Z",
+      "lastAccessed": "2025-04-11T19:56:00.136429Z"
+    },
+    {
+      "key": "sb",
+      "value": "GgP5ZzmMubOG4vVrGx94Omgr",
+      "domain": "facebook.com",
+      "path": "/",
+      "hostOnly": false,
+      "creation": "2025-04-11T19:56:00.136429Z",
+      "lastAccessed": "2025-04-11T19:56:00.136429Z"
+    }
+  ],
+  "cookie_string": "datr=GgP5Z26_5cBQPUyH72RaUy4p; fr=0OuRTo5gEesaR7ruV..Bn-QMa..AAA.0.0.Bn-QMq.AWdZxSIv1uUvRyAIeEkmKxubMXw; sb=GgP5ZzmMubOG4vVrGx94Omgr; ps_l=1; ps_n=1; rs=9%7C1%7C1989%7C1%7C%7CSage%7CMoore%7CSage+Moore"
+}
