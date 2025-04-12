@@ -6,12 +6,9 @@ import requests
 import logging
 import time
 import random
-import sys
 import re
-import json
-import gzip
 import uuid
-from urllib.parse import urlparse, urljoin, unquote, parse_qs, urlencode
+from urllib.parse import urlparse, urljoin, unquote, parse_qs
 from config import get_random_user_agent, REQUEST_TIMEOUT, MAX_RETRIES
 from utils.helpers import simulate_page_load_delay
 
@@ -30,6 +27,7 @@ class FacebookSession:
         self.proxy = proxy
         self.device_id = str(uuid.uuid4()).upper()
         self.base_headers = self._create_base_headers()
+        self.current_url = None
         
         # Important Facebook cookies
         self.fb_dtsg = None
@@ -37,7 +35,7 @@ class FacebookSession:
         self.datr_cookie = None
         
         # Set reasonable redirect limits
-        self.session.max_redirects = 5  # Lower this to avoid infinite loops
+        self.session.max_redirects = 5
         
         # Configure the session with proxy if provided
         if proxy:
@@ -80,15 +78,16 @@ class FacebookSession:
     
     def _handle_fb_redirects(self, response, **kwargs):
         """Handle Facebook app redirects"""
+        # Update current URL
+        self.current_url = response.url
+        
         # Check if the redirect is to fbredirect:// protocol
         if response.is_redirect and 'location' in response.headers:
             redirect_url = response.headers['location']
             
             # Check for Facebook app redirect
             if redirect_url.startswith('fbredirect://'):
-                logger.info(f"Detected Facebook app redirect: {redirect_url}")
-                
-                # Extract the actual URL
+                # Try to extract the actual URL
                 try:
                     # Parse app redirect URL
                     parsed = urlparse(redirect_url)
@@ -97,7 +96,6 @@ class FacebookSession:
                     # Extract the real URL from the uri parameter
                     if 'uri' in params:
                         real_url = unquote(params['uri'][0])
-                        logger.info(f"Extracted web URL from app redirect: {real_url}")
                         
                         # Use normal URL but don't follow redirects on this one
                         # to avoid redirect loop
@@ -108,21 +106,21 @@ class FacebookSession:
                             timeout=REQUEST_TIMEOUT
                         )
                         
+                        # Update current URL
+                        self.current_url = new_response.url
+                        
                         # Replace the original response with our new one
                         return new_response
                 except Exception as e:
-                    logger.error(f"Error handling app redirect: {str(e)}")
+                    pass
             
             # Check for Facebook mobile site redirects to desktop or other formats
             elif redirect_url.startswith('https://facebook.com/') or redirect_url.startswith('https://www.facebook.com/'):
-                logger.info(f"Detected desktop redirect from mobile site: {redirect_url}")
                 
                 # Convert to mobile URL if needed
                 if 'm.facebook.com' not in redirect_url and '/mobile/' not in redirect_url:
                     mobile_url = redirect_url.replace('www.facebook.com', 'm.facebook.com')
                     mobile_url = mobile_url.replace('facebook.com', 'm.facebook.com')
-                    
-                    logger.info(f"Converting to mobile URL: {mobile_url}")
                     
                     # Use mobile URL but don't follow redirects on this one
                     # to avoid redirect loop
@@ -134,14 +132,16 @@ class FacebookSession:
                             timeout=REQUEST_TIMEOUT
                         )
                         
+                        # Update current URL
+                        self.current_url = new_response.url
+                        
                         # Replace the original response with our new one
                         return new_response
                     except Exception as e:
-                        logger.error(f"Error during mobile URL conversion: {str(e)}")
+                        pass
             
             # Handle checkpoint redirects
             elif 'checkpoint' in redirect_url:
-                logger.info(f"Detected checkpoint redirect: {redirect_url}")
                 
                 # Just follow this one without changing anything
                 try:
@@ -152,9 +152,12 @@ class FacebookSession:
                         timeout=REQUEST_TIMEOUT
                     )
                     
+                    # Update current URL
+                    self.current_url = new_response.url
+                    
                     return new_response
                 except Exception as e:
-                    logger.error(f"Error following checkpoint redirect: {str(e)}")
+                    pass
         
         # Try to extract DTSG and LSD tokens from any response
         self._extract_facebook_tokens(response)
@@ -173,15 +176,13 @@ class FacebookSession:
                 dtsg_match = re.search(r'"fb_dtsg":"([^"]+)"', response.text)
                 if dtsg_match:
                     self.fb_dtsg = dtsg_match.group(1)
-                    logger.info(f"Found fb_dtsg token: {self.fb_dtsg[:10]}...")
                 
                 # Try to find LSD
                 lsd_match = re.search(r'name="lsd" value="([^"]+)"', response.text)
                 if lsd_match:
                     self.lsd = lsd_match.group(1)
-                    logger.info(f"Found LSD token: {self.lsd[:10]}...")
-        except Exception as e:
-            logger.error(f"Error extracting Facebook tokens: {str(e)}")
+        except Exception:
+            pass
     
     def _store_important_cookies(self):
         """Store important cookies for later use"""
@@ -190,55 +191,48 @@ class FacebookSession:
         # Store datr cookie which is important for Facebook sessions
         if 'datr' in cookies and not self.datr_cookie:
             self.datr_cookie = cookies['datr']
-            logger.info(f"Stored datr cookie: {self.datr_cookie}")
     
     def _configure_proxy(self, proxy):
         """Configure the session to use a proxy"""
         if not proxy:
-            logger.warning("No proxy provided to configure")
             return
 
         try:
-            # Check if proxy is already formatted for requests
-            if isinstance(proxy, dict) and ('http' in proxy or 'https' in proxy):
-                # Already formatted
-                self.session.proxies.update(proxy)
-                logger.info(f"Session configured with pre-formatted proxy")
-                return
-                
-            # Check if proxy has direct url property
-            if isinstance(proxy, dict) and 'url' in proxy:
-                proxy_url = proxy['url']
+            # Fix: Ensure we're using a consistent proxy format
+            if isinstance(proxy, dict):
+                if 'url' in proxy:
+                    # Direct URL format
+                    proxy_url = proxy['url']
+                    self.session.proxies.update({
+                        'http': proxy_url,
+                        'https': proxy_url
+                    })
+                elif 'username' in proxy and 'password' in proxy and 'ip' in proxy and 'port' in proxy:
+                    # Username/password + IP/port format
+                    proxy_url = f"http://{proxy['username']}:{proxy['password']}@{proxy['ip']}:{proxy['port']}"
+                    self.session.proxies.update({
+                        'http': proxy_url,
+                        'https': proxy_url
+                    })
+                elif 'ip' in proxy and 'port' in proxy:
+                    # Simple IP/port format
+                    proxy_url = f"http://{proxy['ip']}:{proxy['port']}"
+                    self.session.proxies.update({
+                        'http': proxy_url,
+                        'https': proxy_url
+                    })
+                else:
+                    # Try to extract from http/https keys if present
+                    if 'http' in proxy or 'https' in proxy:
+                        self.session.proxies.update(proxy)
+            elif isinstance(proxy, str):
+                # String format (URL)
                 self.session.proxies.update({
-                    'http': proxy_url,
-                    'https': proxy_url
+                    'http': proxy,
+                    'https': proxy
                 })
-                logger.info(f"Session configured with proxy URL: {proxy_url}")
-                return
-                
-            # Check if we have username/password + ip/port
-            if isinstance(proxy, dict) and 'username' in proxy and 'password' in proxy and 'ip' in proxy and 'port' in proxy:
-                proxy_dict = {
-                    'http': f"http://{proxy['username']}:{proxy['password']}@{proxy['ip']}:{proxy['port']}",
-                    'https': f"http://{proxy['username']}:{proxy['password']}@{proxy['ip']}:{proxy['port']}"
-                }
-                self.session.proxies.update(proxy_dict)
-                logger.info(f"Session configured with authenticated proxy: {proxy['ip']}:{proxy['port']}")
-                return
-                
-            # Check if we have just ip/port
-            if isinstance(proxy, dict) and 'ip' in proxy and 'port' in proxy:
-                proxy_dict = {
-                    'http': f"http://{proxy['ip']}:{proxy['port']}",
-                    'https': f"http://{proxy['ip']}:{proxy['port']}"
-                }
-                self.session.proxies.update(proxy_dict)
-                logger.info(f"Session configured with simple proxy: {proxy['ip']}:{proxy['port']}")
-                return
-                
-            logger.warning(f"Unrecognized proxy format: {proxy}")
         except Exception as e:
-            logger.error(f"Error configuring proxy: {str(e)}")
+            print(f"Error configuring proxy: {str(e)}")
     
     def _create_base_headers(self):
         """Create base headers for requests"""
@@ -297,8 +291,8 @@ class FacebookSession:
                     timeout=timeout
                 )
                 
-                # Log response info
-                logger.info(f"GET {url} - Status: {response.status_code}")
+                # Update current URL
+                self.current_url = response.url
                 
                 # Extract important Facebook tokens
                 self._extract_facebook_tokens(response)
@@ -315,25 +309,17 @@ class FacebookSession:
                 return response
                 
             except requests.exceptions.TooManyRedirects as e:
-                logger.warning(f"Too many redirects: {str(e)}")
-                
-                # Immediately fail this proxy and suggest to try another one
-                logger.error(f"This proxy may be blocked or detected by Facebook")
-                
                 # Restore original redirect setting
                 self.session.max_redirects = original_max_redirects
-                
                 raise
                 
             except requests.exceptions.InvalidSchema as e:
                 # This happens with fbredirect:// protocol
-                logger.warning(f"Invalid schema error: {str(e)}")
                 
                 # Try to extract the actual URL from the error message
                 match = re.search(r"'(fbredirect://[^']+)'", str(e))
                 if match:
                     redirect_url = match.group(1)
-                    logger.info(f"Detected app redirect URL: {redirect_url}")
                     
                     try:
                         # Parse app redirect URL
@@ -343,11 +329,9 @@ class FacebookSession:
                         # Extract the real URL from the uri parameter
                         if 'uri' in params:
                             real_url = unquote(params['uri'][0])
-                            logger.info(f"Extracted web URL from app redirect: {real_url}")
                             
                             # Try a direct approach - use the /reg/submit/ endpoint
                             bypass_url = "https://m.facebook.com/reg/submit/"
-                            logger.info(f"Trying direct URL: {bypass_url}")
                             
                             # Try with the new URL
                             response = self.session.get(
@@ -361,14 +345,13 @@ class FacebookSession:
                             self.session.max_redirects = original_max_redirects
                             
                             return response
-                    except Exception as nested_e:
-                        logger.error(f"Error handling app redirect URL: {str(nested_e)}")
+                    except Exception:
+                        pass
                 
                 # Try a direct approach for account creation if regular error handling failed
                 try:
                     # Directly access the full version signup page as fallback
                     fallback_url = "https://m.facebook.com/r.php"
-                    logger.info(f"Trying fallback URL: {fallback_url}")
                     
                     new_headers = headers.copy()
                     new_headers['Host'] = 'm.facebook.com'
@@ -384,28 +367,19 @@ class FacebookSession:
                     self.session.max_redirects = original_max_redirects
                     
                     return response
-                except Exception as fallback_e:
-                    logger.error(f"Fallback approach failed: {str(fallback_e)}")
-                    
+                except Exception:
                     # Restore original redirect setting before re-raising
                     self.session.max_redirects = original_max_redirects
-                    
                     raise e  # Re-raise the original error
                 
             except (requests.RequestException, requests.ConnectionError, requests.Timeout) as e:
-                logger.warning(f"Attempt {attempt+1}/{MAX_RETRIES} failed: {str(e)}")
-                
                 if attempt == MAX_RETRIES - 1:
-                    logger.error(f"All {MAX_RETRIES} attempts failed for URL: {url}")
-                    
                     # Restore original redirect setting
                     self.session.max_redirects = original_max_redirects
-                    
                     raise
                 
                 # Exponential backoff with jitter
                 backoff_time = (2 ** attempt) + random.uniform(0, 1)
-                logger.info(f"Retrying in {backoff_time:.2f} seconds...")
                 time.sleep(backoff_time)
         
         # Should not reach here, but just in case
@@ -488,8 +462,8 @@ class FacebookSession:
                     timeout=timeout
                 )
                 
-                # Log response info
-                logger.info(f"POST {url} - Status: {response.status_code}")
+                # Update current URL
+                self.current_url = response.url
                 
                 # Extract important Facebook tokens
                 self._extract_facebook_tokens(response)
@@ -506,24 +480,16 @@ class FacebookSession:
                 return response
                 
             except requests.exceptions.TooManyRedirects as e:
-                logger.warning(f"Too many redirects: {str(e)}")
-                
-                # Immediately fail this proxy and suggest to try another one
-                logger.error(f"This proxy may be blocked or detected by Facebook")
-                
                 # Restore original redirect setting
                 self.session.max_redirects = original_max_redirects
-                
                 raise
             
             except requests.exceptions.InvalidSchema as e:
                 # This happens with fbredirect:// protocol
-                logger.warning(f"Invalid schema error during POST: {str(e)}")
                 
                 # Try to directly post to the regular submission URL
                 try:
                     submit_url = "https://www.facebook.com/reg/submit/"
-                    logger.info(f"Trying direct submission to: {submit_url}")
                     
                     new_headers = headers.copy()
                     new_headers['Host'] = 'www.facebook.com'
@@ -541,33 +507,28 @@ class FacebookSession:
                     self.session.max_redirects = original_max_redirects
                     
                     return response
-                except Exception as submit_e:
-                    logger.error(f"Direct submission failed: {str(submit_e)}")
-                    
+                except Exception:
                     # Restore original redirect setting before re-raising
                     self.session.max_redirects = original_max_redirects
-                    
                     raise e  # Re-raise the original error
                 
             except (requests.RequestException, requests.ConnectionError, requests.Timeout) as e:
-                logger.warning(f"Attempt {attempt+1}/{MAX_RETRIES} failed: {str(e)}")
-                
                 if attempt == MAX_RETRIES - 1:
-                    logger.error(f"All {MAX_RETRIES} attempts failed for URL: {url}")
-                    
                     # Restore original redirect setting
                     self.session.max_redirects = original_max_redirects
-                    
                     raise
                 
                 # Exponential backoff with jitter
                 backoff_time = (2 ** attempt) + random.uniform(0, 1)
-                logger.info(f"Retrying in {backoff_time:.2f} seconds...")
                 time.sleep(backoff_time)
         
         # Should not reach here, but just in case
         self.session.max_redirects = original_max_redirects
         return None
+    
+    def get_current_url(self):
+        """Get the current URL of the session"""
+        return self.current_url
     
     def resolve_relative_url(self, base_url, relative_url):
         """Resolve a relative URL against a base URL"""
@@ -603,9 +564,7 @@ class FacebookSession:
             
         self.user_agent = user_agent
         self.base_headers['User-Agent'] = user_agent
-        logger.info(f"Updated user agent: {user_agent}")
     
     def wait_after_creation(self, seconds=5):
         """Wait after account creation to let Facebook process changes"""
-        logger.info(f"Waiting {seconds} seconds after account creation...")
         time.sleep(seconds)

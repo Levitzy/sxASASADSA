@@ -22,63 +22,29 @@ def get_user_email():
         if is_valid_email(email):
             # Ask for optional password storage (user can leave blank)
             email_password = input("Optional: Enter the email password (if you want to save it): ").strip()
-            logger.info(f"Valid email provided: {email}")
             return email, email_password
         
         print("Invalid email format. Please enter a valid email address.")
         attempts += 1
     
-    logger.error("Maximum attempts reached for email input")
+    print("Maximum attempts reached for email input")
     return None, None
 
-def get_verification_info():
-    """Get verification code or link from user"""
-    print("\n=== Email Verification Required ===")
-    print("Facebook sent a verification email to your temporary email address.")
-    print("Please check your email and provide either:")
-    print("1. The verification link (starts with http/https), or")
-    print("2. The verification code (usually 6-8 digits)")
+def get_verification_code():
+    """Get verification code from user"""
+    verification_code = input("\nEnter FB code: ").strip()
     
-    attempts = 0
-    max_attempts = 3
-    
-    while attempts < max_attempts:
-        verification_info = input("Enter verification link or code: ").strip()
-        
-        # Check if it's a URL
-        if verification_info.startswith(('http://', 'https://')):
-            logger.info("User provided a verification link")
-            return verification_info
+    # Check if it's a URL (user pasted a link instead of code)
+    if verification_code.startswith(('http://', 'https://')):
+        print("That appears to be a URL. Please enter just the verification code from the email.")
+        verification_code = input("Enter FB code only: ").strip()
             
-        # Check if it's a numeric code
-        if re.match(r'^\d{4,8}$', verification_info):
-            logger.info("User provided a verification code")
-            return verification_info
-            
-        # Check for FB- prefixed code
-        if verification_info.startswith('FB-') and len(verification_info) > 3:
-            if re.match(r'^FB-\d{4,8}$', verification_info):
-                logger.info("User provided an FB- prefixed code")
-                return verification_info
-                
-        print("Invalid input. Please enter a valid verification link (https://...) or code (numeric digits).")
-        attempts += 1
+    # Check if it's a numeric code or FB- prefixed code
+    if re.match(r'^\d{4,}$', verification_code) or (verification_code.startswith('FB-') and re.match(r'^FB-\d{4,}$', verification_code)):
+        return verification_code.strip()
     
-    logger.error("Maximum attempts reached for verification info input")
+    # If code format is invalid but user entered something, return it anyway
+    if verification_code:
+        return verification_code.strip()
+    
     return None
-
-def get_debug_choice():
-    """Get user choice for debug mode"""
-    print("\n=== Debug Options ===")
-    print("1. Run normally")
-    print("2. Run in debug mode (verbose logging)")
-    print("3. Exit")
-    
-    choice = input("Enter your choice (1-3): ").strip()
-    
-    if choice == "1":
-        return False
-    elif choice == "2":
-        return True
-    else:
-        return None  # Exit

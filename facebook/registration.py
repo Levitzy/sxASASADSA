@@ -11,7 +11,6 @@ from bs4 import BeautifulSoup
 from config import FB_MOBILE_HOME, FB_MOBILE_SIGNUP
 from facebook.session import FacebookSession
 from facebook.verification import VerificationHandler
-from account.saver import AccountSaver
 from utils.helpers import (
     simulate_typing_delay, 
     simulate_field_delay, 
@@ -29,13 +28,12 @@ class FacebookRegistration:
         self.email_password = email_password
         self.session = FacebookSession(proxy)
         self.verification_handler = VerificationHandler(self.session)
-        self.account_saver = AccountSaver()
         self.registration_attempts = 0
         self.max_registration_attempts = 2
         
     def create_account(self):
         """Create a new Facebook account using mobile site"""
-        logger.info("Starting Facebook account creation process...")
+        print("\nStarting Facebook account creation...")
         
         # Print user credentials
         print("\n=== Account Information ===")
@@ -44,6 +42,7 @@ class FacebookRegistration:
         print(f"DOB: {self.user_data['birth_month']}/{self.user_data['birth_day']}/{self.user_data['birth_year']}")
         print(f"Email: {self.email}")
         print(f"Password: {self.user_data['password']}")
+        
         print("\nAttempting to create Facebook account...")
         
         # Start with warmup requests to make the session look more natural
@@ -54,23 +53,17 @@ class FacebookRegistration:
         
         # If mobile registration fails, try desktop registration
         if not result:
-            logger.info("Mobile registration failed, trying desktop registration...")
+            print("Mobile registration failed, trying desktop registration...")
             result = self._desktop_registration()
         
-        # If both failed but we have cookies, try to save partial info
+        # Return partial account info
         if not result:
-            logger.error("Account creation failed with all methods")
+            print("❌ Account creation failed with all methods")
             
-            # Try to save partial account info if available
+            # Return partial account info
             cookies_dict = self.session.get_cookies_dict()
             if cookies_dict:
-                logger.info("Saving partial account info with cookies")
-                return self.account_saver.save_partial_account(
-                    self.user_data,
-                    self.email,
-                    self.email_password,
-                    cookies_dict
-                )
+                return self._create_partial_account_info()
             
             return False
         
@@ -78,24 +71,20 @@ class FacebookRegistration:
     
     def _warmup_session(self):
         """Perform warm-up requests to make the session look more natural"""
-        logger.info("Warming up session with natural browsing patterns...")
-        
         try:
             # First visit the homepage 
             self.session.get('https://m.facebook.com/', max_redirects=3)
             
             # Small delay between requests
-            time.sleep(random.uniform(2, 4))
+            time.sleep(random.uniform(1, 2))
             
             # Visit another common page
             self.session.get('https://m.facebook.com/policies/', max_redirects=2)
             
             # Small delay between requests
-            time.sleep(random.uniform(1, 3))
-            
-            logger.info("Session warm-up completed")
+            time.sleep(random.uniform(1, 2))
         except Exception as e:
-            logger.warning(f"Error during session warm-up: {str(e)}")
+            logger.debug(f"Error during session warm-up: {str(e)}")
     
     def _mobile_registration(self):
         """Register using Facebook's mobile site"""
@@ -103,14 +92,12 @@ class FacebookRegistration:
         
         try:
             # First, visit the homepage to get cookies and session data
-            logger.info("Visiting Facebook mobile homepage...")
+            print("Accessing Facebook...")
             initial_response = self.session.get(FB_MOBILE_HOME, max_redirects=5)
             
             if initial_response.status_code != 200:
-                logger.error(f"Failed to access Facebook mobile homepage: {initial_response.status_code}")
+                print(f"Failed to access Facebook: {initial_response.status_code}")
                 return False
-                
-            logger.info(f"Mobile homepage accessed successfully: {initial_response.status_code}")
             
             # Human delay - simulating reading the page
             simulate_page_load_delay()
@@ -128,8 +115,6 @@ class FacebookRegistration:
             reg_form = None
             
             for signup_url in signup_urls:
-                logger.info(f"Trying signup URL: {signup_url}")
-                
                 try:
                     # Add delay before clicking signup (like a human)
                     simulate_field_delay()
@@ -137,14 +122,11 @@ class FacebookRegistration:
                     signup_response = self.session.get(
                         signup_url,
                         referer=FB_MOBILE_HOME,
-                        max_redirects=5  # Lower redirect limit to catch invalid schemas faster
+                        max_redirects=5
                     )
                     
                     if signup_response.status_code != 200:
-                        logger.warning(f"Failed to access signup page {signup_url}: {signup_response.status_code}")
                         continue
-                        
-                    logger.info(f"Signup page {signup_url} accessed successfully: {signup_response.status_code}")
                     
                     # Parse the signup page to extract form data
                     signup_soup = BeautifulSoup(signup_response.text, 'html.parser')
@@ -152,18 +134,15 @@ class FacebookRegistration:
                     # Check if we find a registration form
                     reg_form = self._find_registration_form(signup_soup)
                     if reg_form:
-                        logger.info(f"Found registration form at {signup_url}")
+                        print(f"Found registration form...")
                         break
-                    else:
-                        logger.warning(f"No registration form found at {signup_url}")
                 
                 except Exception as e:
-                    logger.warning(f"Error accessing {signup_url}: {str(e)}")
                     continue
             
             # If we couldn't get a registration form from any URL, bail out
             if not signup_response or not signup_soup or not reg_form:
-                logger.error("Could not access any signup page successfully")
+                print("Could not access signup page")
                 return False
             
             # Extract form action URL
@@ -172,8 +151,6 @@ class FacebookRegistration:
                 form_action = "https://m.facebook.com/reg/submit/"
             elif not form_action.startswith('http'):
                 form_action = f"https://m.facebook.com{form_action}"
-                
-            logger.info(f"Registration form action URL: {form_action}")
             
             # Extract hidden fields and process form
             form_data = self._extract_form_data(reg_form)
@@ -188,6 +165,7 @@ class FacebookRegistration:
             self._simulate_human_form_filling()
             
             # Submit registration form
+            print("Submitting registration form...")
             registration_response = self.session.post(
                 form_action,
                 data=form_data,
@@ -195,84 +173,71 @@ class FacebookRegistration:
                 max_redirects=5
             )
             
-            logger.info(f"Registration response status: {registration_response.status_code}")
-            logger.info(f"Final URL after registration: {registration_response.url}")
-            
             # Wait after registration before checking result
-            time.sleep(3)
+            time.sleep(2)
             
             # Check for successful registration
             cookies = self.session.get_cookies_dict()
             
             # Check for success indicators
             if "c_user" in cookies:
-                logger.info(f"Found c_user cookie: {cookies['c_user']}. Registration successful!")
+                print(f"✅ Registration successful! User ID: {cookies['c_user']}")
                 return self._finalize_account()
             
             # Handle various verification pathways
             if any(term in registration_response.url for term in ["checkpoint", "confirmemail", "confirm_email", "confirmation"]):
-                logger.info("Registration requires verification")
+                print("Registration requires verification...")
                 
-                # First check if it's asking for email verification
-                if "email" in registration_response.url or "confirmemail" in registration_response.url:
-                    if self.verification_handler.handle_email_verification(registration_response):
-                        logger.info("Email verification successful")
-                        return self._finalize_account()
-                else:
-                    if self.verification_handler.handle_verification(registration_response):
-                        logger.info("Verification successful")
-                        return self._finalize_account()
+                # Return account info with verification flag and callback
+                return self._create_verification_info()
             
             # Check for other success indicators
             elif "welcome" in registration_response.url or "home" in registration_response.url:
-                logger.info("Registration successful based on redirect!")
+                print("Registration successful based on redirect!")
                 return self._finalize_account()
             
             # Check for login form - if present, our registration succeeded
             registration_soup = BeautifulSoup(registration_response.text, 'html.parser')
             login_form = registration_soup.find('form', id='login_form')
             if login_form:
-                logger.info("Registration successful! Found login form in response.")
+                print("Registration successful! Found login form in response.")
                 
                 # Wait a bit longer before login attempt to allow Facebook to process the account
-                self.session.wait_after_creation(10)
+                self.session.wait_after_creation(5)
                 
                 return self._attempt_login_with_credentials()
             
             # Check for verification messages
             if any(phrase in registration_response.text.lower() for phrase in 
                   ["confirmation code", "verification code", "check your email", "verify your account"]):
-                logger.info("Detected verification request in the response")
-                if self.verification_handler.handle_email_verification(registration_response):
-                    logger.info("Email verification successful")
-                    return self._finalize_account()
+                print("Detected verification request in the response")
+                
+                # Return account info with verification flag and callback
+                return self._create_verification_info()
             
             # Check for error messages
             error_messages = self._extract_error_messages(registration_soup)
             if error_messages:
-                logger.error(f"Registration errors found: {', '.join(error_messages)}")
+                print(f"❌ Registration errors: {', '.join(error_messages)}")
                 
                 # If this is our first attempt and we have specific errors, retry with adjustments
                 if self.registration_attempts < self.max_registration_attempts:
                     if any("email" in err.lower() for err in error_messages):
-                        logger.info("Email error detected. Retry not possible with same email.")
                         return False
                     
                     # For other errors, try desktop registration
                     return False
             
             # As a last resort, try logging in
-            logger.info("No success indicators found. Trying to log in as a fallback.")
+            print("No success indicators found. Trying to log in as a fallback.")
             
-            # Wait a bit longer before login attempt to allow Facebook to process the account
-            self.session.wait_after_creation(7)
+            # Wait a bit longer before login attempt
+            self.session.wait_after_creation(5)
             
             return self._attempt_login_with_credentials()
                 
         except Exception as e:
-            logger.error(f"Error during mobile registration: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
+            print(f"❌ Error during registration: {str(e)}")
             return False
     
     def _extract_error_messages(self, soup):
@@ -337,7 +302,7 @@ class FacebookRegistration:
         self.registration_attempts += 1
         
         try:
-            logger.info("Trying desktop registration approach...")
+            print("Trying desktop registration approach...")
             
             # Update user agent to desktop
             desktop_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
@@ -347,11 +312,11 @@ class FacebookRegistration:
             self.session.clear_cookies()
             
             # Wait a bit before trying again
-            time.sleep(random.uniform(3, 5))
+            time.sleep(random.uniform(2, 3))
             
             # Warm up session again with desktop UA
             self.session.get('https://www.facebook.com/', max_redirects=3)
-            time.sleep(random.uniform(2, 3))
+            time.sleep(random.uniform(1, 2))
             
             # Visit the regular desktop signup page
             signup_url = "https://www.facebook.com/r.php"
@@ -363,10 +328,8 @@ class FacebookRegistration:
             )
             
             if signup_response.status_code != 200:
-                logger.error(f"Failed to access desktop signup page: {signup_response.status_code}")
+                print(f"Failed to access desktop signup page: {signup_response.status_code}")
                 return False
-                
-            logger.info(f"Desktop signup page accessed successfully: {signup_response.status_code}")
             
             # Parse the signup page
             signup_soup = BeautifulSoup(signup_response.text, 'html.parser')
@@ -375,10 +338,8 @@ class FacebookRegistration:
             reg_form = self._find_registration_form(signup_soup)
                 
             if not reg_form:
-                logger.error("No registration form found on desktop site")
+                print("No registration form found on desktop site")
                 return False
-            
-            logger.info("Found registration form on desktop site")
             
             # Extract form action URL
             form_action = reg_form.get('action', '')
@@ -386,8 +347,6 @@ class FacebookRegistration:
                 form_action = "https://www.facebook.com/reg/submit/"
             elif not form_action.startswith('http'):
                 form_action = f"https://www.facebook.com{form_action}"
-                
-            logger.info(f"Desktop registration form action URL: {form_action}")
             
             # Extract form data
             form_data = self._extract_form_data(reg_form)
@@ -402,6 +361,7 @@ class FacebookRegistration:
             self._simulate_human_form_filling()
             
             # Submit the form
+            print("Submitting desktop registration form...")
             registration_response = self.session.post(
                 form_action,
                 data=form_data,
@@ -409,35 +369,26 @@ class FacebookRegistration:
                 max_redirects=5
             )
             
-            logger.info(f"Desktop registration response status: {registration_response.status_code}")
-            logger.info(f"Final URL after desktop registration: {registration_response.url}")
-            
             # Wait after registration to let Facebook process it
-            time.sleep(5)
+            time.sleep(3)
             
             # Check for successful registration
             cookies = self.session.get_cookies_dict()
             
             if "c_user" in cookies:
-                logger.info(f"Found c_user cookie: {cookies['c_user']}. Desktop registration successful!")
+                print(f"✅ Desktop registration successful! User ID: {cookies['c_user']}")
                 return self._finalize_account()
             
             # Handle verification
             if any(term in registration_response.url for term in ["checkpoint", "confirmemail", "confirm_email", "confirmation"]):
-                logger.info("Desktop registration requires verification")
+                print("Desktop registration requires verification")
                 
-                if "email" in registration_response.url or "confirmemail" in registration_response.url:
-                    if self.verification_handler.handle_email_verification(registration_response):
-                        logger.info("Email verification successful")
-                        return self._finalize_account()
-                else:
-                    if self.verification_handler.handle_verification(registration_response):
-                        logger.info("Verification successful")
-                        return self._finalize_account()
+                # Return account info with verification flag and callback
+                return self._create_verification_info()
             
             # Check for other success indicators
             elif "welcome" in registration_response.url or "home" in registration_response.url:
-                logger.info("Desktop registration successful based on redirect!")
+                print("Desktop registration successful based on redirect!")
                 return self._finalize_account()
             
             # Check for registration success or error messages
@@ -446,19 +397,17 @@ class FacebookRegistration:
             # Look for error messages
             error_messages = self._extract_error_messages(registration_soup)
             if error_messages:
-                logger.error(f"Desktop registration errors found: {', '.join(error_messages)}")
+                print(f"❌ Desktop registration errors: {', '.join(error_messages)}")
                 # No retry for desktop errors, as we've already tried both methods
                 
             # Wait before login attempt
-            self.session.wait_after_creation(10)
+            self.session.wait_after_creation(5)
             
             # Try login as fallback
             return self._attempt_login_with_credentials()
             
         except Exception as e:
-            logger.error(f"Error during desktop registration: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
+            print(f"❌ Error during desktop registration: {str(e)}")
             return False
     
     def _find_registration_form(self, soup):
@@ -480,7 +429,6 @@ class FacebookRegistration:
         for selector in form_selectors:
             form = soup.select_one(selector)
             if form:
-                logger.info(f"Found registration form with selector: {selector}")
                 return form
         
         # Look for common registration form fields in any form
@@ -494,7 +442,6 @@ class FacebookRegistration:
                 field_name = input_field.get('name', '').lower()
                 for pattern in registration_field_patterns:
                     if pattern in field_name:
-                        logger.info(f"Found registration form containing field: {field_name}")
                         return form
         
         # Look for forms with signup/register buttons
@@ -511,7 +458,6 @@ class FacebookRegistration:
                 for term in signup_terms:
                     if (term in button_text or term in button_value or 
                         term in button_id or term in button_name):
-                        logger.info(f"Found registration form with signup button containing term: {term}")
                         return form
         
         # Try looking for registration areas based on text content
@@ -521,7 +467,6 @@ class FacebookRegistration:
             # Look for the closest form
             form = area.find_parent('form')
             if form:
-                logger.info(f"Found registration form near heading: {area.get_text()}")
                 return form
         
         # If all else fails, just try to find any form that seems like a registration form
@@ -529,7 +474,6 @@ class FacebookRegistration:
             # Count input fields (registration forms typically have many)
             inputs = form.find_all('input')
             if len(inputs) >= 5:  # Most registration forms have at least 5 fields
-                logger.info(f"Found potential registration form with {len(inputs)} input fields")
                 return form
                 
         # If we've tried everything and still haven't found a form, return None
@@ -721,37 +665,22 @@ class FacebookRegistration:
     
     def _simulate_human_form_filling(self):
         """Simulate human behavior while filling out the form"""
-        logger.info("Simulating human form filling...")
-        
-        # Simulate typing first name
         simulate_field_delay()
-        
-        # Simulate typing last name
         simulate_field_delay()
-        
-        # Simulate typing email
         simulate_field_delay()
-        
-        # Simulate typing password
         simulate_field_delay()
-        
-        # Simulate selecting birthday
         simulate_field_delay()
-        
-        # Simulate selecting gender
         simulate_field_delay()
-        
-        # Simulate final review before submission
         simulate_submit_delay()
     
     def _attempt_login_with_credentials(self):
         """Attempt to log in with the credentials we created"""
-        logger.info("Attempting to log in with credentials...")
+        print("Attempting to log in with credentials...")
         
         try:
             # Wait a bit before attempting login (simulate human behavior)
             simulate_page_load_delay()
-            time.sleep(3)  # Additional delay
+            time.sleep(2)
             
             # Use the mobile login page
             login_url = "https://m.facebook.com/login/"
@@ -760,7 +689,7 @@ class FacebookRegistration:
             login_page_response = self.session.get(login_url, max_redirects=5)
             
             if login_page_response.status_code != 200:
-                logger.error(f"Failed to access login page: {login_page_response.status_code}")
+                print(f"Failed to access login page: {login_page_response.status_code}")
                 return False
             
             # Parse login page
@@ -770,11 +699,11 @@ class FacebookRegistration:
             login_form = login_soup.find('form', id='login_form') or login_soup.find('form', action='/login/')
             
             if not login_form:
-                logger.error("No login form found on login page")
+                print("No login form found on login page")
                 
                 # Check if we already have a c_user cookie (might have auto-logged in)
                 if self.session.has_cookie('c_user'):
-                    logger.info(f"Found c_user cookie without login: {self.session.get_cookie('c_user')}")
+                    print(f"Found c_user cookie without login: {self.session.get_cookie('c_user')}")
                     return self._finalize_account()
                     
                 return False
@@ -841,16 +770,12 @@ class FacebookRegistration:
                 login_data['lsd'] = self.session.lsd
             
             # Simulate human typing delay
-            logger.info("Simulating typing email...")
             simulate_typing_delay(self.email)
-            
-            logger.info("Simulating typing password...")
             simulate_typing_delay(self.user_data['password'])
-            
-            logger.info("Simulating reviewing before login...")
             simulate_submit_delay()
             
             # Submit login form with reduced redirects
+            print("Submitting login form...")
             login_response = self.session.post(
                 form_action,
                 data=login_data,
@@ -858,46 +783,33 @@ class FacebookRegistration:
                 max_redirects=5
             )
             
-            logger.info(f"Login response status: {login_response.status_code}")
-            logger.info(f"Final URL after login: {login_response.url}")
-            
             # Check for c_user cookie
             if self.session.has_cookie('c_user'):
-                logger.info(f"Login successful! Found c_user cookie: {self.session.get_cookie('c_user')}")
+                print(f"Login successful! Found c_user cookie: {self.session.get_cookie('c_user')}")
                 return self._finalize_account()
             
             # Check for specific verification pathways
             if "checkpoint" in login_response.url or "confirmation" in login_response.url:
-                logger.info("Login requires verification")
+                print("Login requires verification")
                 
-                # Check if it's email verification
-                login_text = BeautifulSoup(login_response.text, 'html.parser').get_text().lower()
-                if "email" in login_text and ("code" in login_text or "confirm" in login_text):
-                    logger.info("Email verification required, handling it...")
-                    if self.verification_handler.handle_email_verification(login_response):
-                        return self._finalize_account()
-                else:
-                    logger.info("General verification required, handling it...")
-                    if self.verification_handler.handle_verification(login_response):
-                        return self._finalize_account()
+                # Return account info with verification flag and callback
+                return self._create_verification_info()
             
             # Check for login success based on URL patterns
             if "home.php" in login_response.url or "feed" in login_response.url:
-                logger.info("Login successful based on redirect URL!")
+                print("Login successful based on redirect URL!")
                 return self._finalize_account()
             
             # Try visiting the homepage as a fallback
             return self._visit_homepage_for_cookies()
         
         except Exception as e:
-            logger.error(f"Error during login attempt: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
+            print(f"Error during login attempt: {str(e)}")
             return False
     
     def _visit_homepage_for_cookies(self):
         """Visit Facebook homepage to try to get cookies"""
-        logger.info("Visiting Facebook homepage to get cookies...")
+        print("Visiting Facebook homepage to get cookies...")
         
         try:
             # Wait a bit before visiting homepage
@@ -906,62 +818,77 @@ class FacebookRegistration:
             # Visit homepage
             home_response = self.session.get('https://m.facebook.com/', max_redirects=5)
             
-            logger.info(f"Homepage response status: {home_response.status_code}")
-            logger.info(f"Homepage URL: {home_response.url}")
-            
             # Check for c_user cookie
             if self.session.has_cookie('c_user'):
-                logger.info(f"Success! Found c_user cookie: {self.session.get_cookie('c_user')}")
+                print(f"Success! Found c_user cookie: {self.session.get_cookie('c_user')}")
                 return self._finalize_account()
             
             # Check if we're at a verification page
             if "checkpoint" in home_response.url or "confirm" in home_response.url:
-                logger.info("Redirected to verification page, handling verification...")
-                if self.verification_handler.handle_verification(home_response):
-                    return self._finalize_account()
+                print("Redirected to verification page...")
+                return self._create_verification_info()
             
             # One more attempt - load the profile page
-            logger.info("Trying to visit profile page...")
+            print("Trying to visit profile page...")
             simulate_field_delay()
             
             profile_response = self.session.get('https://m.facebook.com/profile.php', max_redirects=5)
             
-            logger.info(f"Profile page response status: {profile_response.status_code}")
-            logger.info(f"Profile page URL: {profile_response.url}")
-            
             # Check for c_user cookie
             if self.session.has_cookie('c_user'):
-                logger.info(f"Success! Found c_user cookie: {self.session.get_cookie('c_user')}")
+                print(f"Success! Found c_user cookie: {self.session.get_cookie('c_user')}")
                 return self._finalize_account()
             
             # Check if we're at a verification page
             if "checkpoint" in profile_response.url or "confirm" in profile_response.url:
-                logger.info("Redirected to verification page from profile, handling verification...")
-                if self.verification_handler.handle_verification(profile_response):
-                    return self._finalize_account()
+                print("Redirected to verification page from profile...")
+                return self._create_verification_info()
             
-            logger.error("Still no c_user cookie found. Account creation may have failed.")
+            print("No c_user cookie found. Account creation may have failed.")
             
-            # Last attempt - create a partial account info
+            # Create a partial account info
             return self._create_partial_account_info()
         
         except Exception as e:
-            logger.error(f"Error visiting homepage: {str(e)}")
+            print(f"Error visiting homepage: {str(e)}")
             return self._create_partial_account_info()
     
     def _create_partial_account_info(self):
         """Create partial account info when we can't get the c_user cookie"""
-        logger.info("Creating partial account info...")
-        return self.account_saver.save_partial_account(
-            self.user_data,
-            self.email,
-            self.email_password,
-            self.session.get_cookies_dict()
-        )
+        print("Creating partial account info...")
+        
+        return {
+            'success': False,
+            'partial': True,
+            'first_name': self.user_data['first_name'],
+            'last_name': self.user_data['last_name'],
+            'email': self.email,
+            'password': self.user_data['password'],
+            'gender': "Female" if self.user_data['gender'] == "1" else "Male"
+        }
+    
+    def _create_verification_info(self):
+        """Create account info with verification callback"""
+        print("Account created but requires verification...")
+        
+        # Define the verification function that will be called later
+        def verify_with_code(code):
+            return self.verification_handler.handle_verification_code(code)
+        
+        # Return account info with verification flag and callback
+        return {
+            'verification_required': True,
+            'first_name': self.user_data['first_name'],
+            'last_name': self.user_data['last_name'],
+            'email': self.email,
+            'password': self.user_data['password'],
+            'gender': "Female" if self.user_data['gender'] == "1" else "Male",
+            'verify_func': verify_with_code
+        }
     
     def _finalize_account(self):
-        """Finalize account creation and save account data"""
-        logger.info("Finalizing account creation...")
+        """Finalize account creation and return account data"""
+        print("Finalizing account creation...")
         
         try:
             # Get cookies
@@ -971,45 +898,41 @@ class FacebookRegistration:
             user_id = cookies_dict.get('c_user', '')
             
             if user_id:
-                logger.info(f"Account created successfully! User ID: {user_id}")
+                print(f"Account created successfully! User ID: {user_id}")
                 
-                # Save account information
-                return self.account_saver.save_account(
-                    None,  # No additional account data
-                    self.user_data,
-                    self.email,
-                    self.email_password,
-                    cookies_dict,
-                    True  # Success
-                )
+                # Return account information
+                return {
+                    'success': True,
+                    'user_id': user_id,
+                    'first_name': self.user_data['first_name'],
+                    'last_name': self.user_data['last_name'],
+                    'email': self.email,
+                    'password': self.user_data['password'],
+                    'gender': "Female" if self.user_data['gender'] == "1" else "Male"
+                }
             else:
-                # One last attempt - try to infer user_id from other cookies or response
+                # One last attempt - try to infer user_id from other cookies
                 inferred_user_id = self._infer_user_id_from_cookies(cookies_dict)
                 
                 if inferred_user_id:
-                    logger.info(f"Inferred user ID: {inferred_user_id} from other cookies")
+                    print(f"Inferred user ID: {inferred_user_id} from other cookies")
                     
-                    # Create a modified cookies_dict with the inferred user_id
-                    cookies_dict['c_user'] = inferred_user_id
-                    
-                    # Save account information with inferred ID
-                    account_data = {'inferred_id': True}
-                    return self.account_saver.save_account(
-                        account_data,
-                        self.user_data,
-                        self.email,
-                        self.email_password,
-                        cookies_dict,
-                        True  # Success
-                    )
+                    # Return account information with inferred ID
+                    return {
+                        'success': True,
+                        'user_id': inferred_user_id,
+                        'first_name': self.user_data['first_name'],
+                        'last_name': self.user_data['last_name'],
+                        'email': self.email,
+                        'password': self.user_data['password'],
+                        'gender': "Female" if self.user_data['gender'] == "1" else "Male"
+                    }
                 
                 # If we still don't have a user ID, create partial info
                 return self._create_partial_account_info()
                 
         except Exception as e:
-            logger.error(f"Error finalizing account: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
+            print(f"Error finalizing account: {str(e)}")
             return self._create_partial_account_info()
             
     def _infer_user_id_from_cookies(self, cookies_dict):
@@ -1036,5 +959,5 @@ class FacebookRegistration:
             
             return None
         except Exception as e:
-            logger.error(f"Error inferring user ID: {str(e)}")
+            print(f"Error inferring user ID: {str(e)}")
             return None

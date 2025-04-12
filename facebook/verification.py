@@ -7,7 +7,6 @@ import logging
 import time
 import random
 from bs4 import BeautifulSoup
-from utils.user_input import get_verification_info
 from utils.helpers import simulate_typing_delay, simulate_submit_delay, simulate_field_delay
 
 logger = logging.getLogger("FBAccountCreator")
@@ -19,7 +18,7 @@ class VerificationHandler:
     
     def handle_verification(self, response):
         """Handle Facebook verification steps"""
-        logger.info("Handling verification process...")
+        print("Handling verification process...")
         
         # First check if it's a simple email verification
         if "email" in response.url.lower() and ("confirm" in response.url.lower() or "verify" in response.url.lower()):
@@ -40,34 +39,21 @@ class VerificationHandler:
             elif re.search(r"(captcha|security.check|confirm.*not.*robot)", page_text, re.IGNORECASE):
                 verification_type = "captcha"
             
-            logger.info(f"Detected verification type: {verification_type}")
+            print(f"Detected verification type: {verification_type}")
             
             if verification_type == "email":
                 return self.handle_email_verification(response)
             elif verification_type in ["phone", "captcha"]:
-                logger.warning(f"Cannot automatically handle {verification_type} verification")
-                
-                # For phone verification, notify the user
-                if verification_type == "phone":
-                    print("\n=== Phone Verification Required ===")
-                    print("Facebook is requesting phone verification, which this script cannot handle automatically.")
-                    print("You will need to complete this process manually.")
-                    
-                # For captcha verification, notify the user
-                elif verification_type == "captcha":
-                    print("\n=== Captcha Verification Required ===")
-                    print("Facebook is requesting captcha verification, which this script cannot handle automatically.")
-                    print("You will need to complete this process manually.")
-                
+                print(f"Cannot automatically handle {verification_type} verification")
                 return False
             else:
-                logger.warning("Unknown verification type. Trying generic approach...")
+                print("Unknown verification type. Trying generic approach...")
                 
                 # Look for a form we might be able to submit
                 verification_form = soup.find('form')
                 
                 if not verification_form:
-                    logger.error("No verification form found")
+                    print("No verification form found")
                     return False
                     
                 # Extract form data
@@ -125,27 +111,141 @@ class VerificationHandler:
                 
                 # Check if we passed the verification
                 if "home.php" in verification_submit.url or "welcome" in verification_submit.url:
-                    logger.info("Successfully passed verification!")
+                    print("Successfully passed verification!")
                     return True
                 elif "checkpoint" in verification_submit.url or "confirm" in verification_submit.url:
-                    logger.warning("Still in verification process after submission.")
+                    print("Still in verification process after submission.")
                     return False
                 else:
                     # Check for c_user cookie as a sign of success
                     if self.session.has_cookie('c_user'):
-                        logger.info("Found c_user cookie after verification. Likely successful.")
+                        print("Found c_user cookie after verification. Likely successful.")
                         return True
                     else:
-                        logger.error("Verification likely failed.")
+                        print("Verification likely failed.")
                         return False
                 
         except Exception as e:
-            logger.error(f"Error handling verification: {str(e)}")
+            print(f"Error handling verification: {str(e)}")
+            return False
+    
+    def handle_verification_code(self, code):
+        """Handle verification with a code provided directly"""
+        print(f"Processing verification code: {code}")
+        
+        try:
+            # First, try to find any checkpoint or confirmation pages in the session
+            current_url = self.session.get_current_url()
+            
+            # If we don't have a current URL, try to visit the homepage to trigger verification
+            if not current_url or 'facebook.com' not in current_url:
+                print("No verification page detected. Visiting Facebook homepage...")
+                response = self.session.get('https://m.facebook.com/', max_redirects=5)
+                current_url = response.url
+            
+            # Check if we're already at a verification page
+            if 'checkpoint' in current_url or 'confirm' in current_url or 'verification' in current_url:
+                print("Found verification page. Submitting code...")
+                response = self.session.get(current_url, max_redirects=5)
+                
+                # Find the code entry form
+                soup = BeautifulSoup(response.text, 'html.parser')
+                code_form = self._find_code_entry_form(soup)
+                
+                if code_form:
+                    return self._submit_verification_code(code_form, current_url, code)
+                else:
+                    print("Couldn't find code entry form on the page")
+            
+            # If we're not on a verification page, try to find a general checkpoint
+            print("Trying general checkpoint page...")
+            checkpoint_response = self.session.get('https://m.facebook.com/checkpoint/', max_redirects=5)
+            
+            # Check if we got a verification form
+            soup = BeautifulSoup(checkpoint_response.text, 'html.parser')
+            code_form = self._find_code_entry_form(soup)
+            
+            if code_form:
+                return self._submit_verification_code(code_form, checkpoint_response.url, code)
+            
+            # If we still can't find a form, try a more general approach
+            print("Trying a more general approach for code entry...")
+            
+            # Try several common verification URLs
+            verification_urls = [
+                'https://m.facebook.com/confirmemail.php',
+                'https://m.facebook.com/checkpoint/?next',
+                'https://m.facebook.com/login/checkpoint/',
+                'https://m.facebook.com/login/reauth.php'
+            ]
+            
+            for url in verification_urls:
+                try:
+                    print(f"Trying URL: {url}")
+                    response = self.session.get(url, max_redirects=5)
+                    
+                    # Check if we found a form
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    code_form = self._find_code_entry_form(soup)
+                    
+                    if code_form:
+                        return self._submit_verification_code(code_form, response.url, code)
+                except Exception:
+                    continue
+            
+            # Last resort: try to directly send a POST request to common verification endpoints
+            print("Trying direct code submission as last resort...")
+            
+            # Common verification endpoints
+            verification_endpoints = [
+                'https://m.facebook.com/checkpoint/submit/',
+                'https://m.facebook.com/confirmemail.php',
+                'https://m.facebook.com/confirm/submit/'
+            ]
+            
+            for endpoint in verification_endpoints:
+                try:
+                    # Create a generic form submission
+                    form_data = {
+                        'code': code,
+                        'verification_code': code,
+                        'confirmation_code': code,
+                        'submit': 'Confirm',
+                        'fb_dtsg': self.session.fb_dtsg if self.session.fb_dtsg else '',
+                        'lsd': self.session.lsd if self.session.lsd else ''
+                    }
+                    
+                    print(f"Trying direct submission to: {endpoint}")
+                    
+                    # Submit the code
+                    response = self.session.post(
+                        endpoint,
+                        data=form_data,
+                        referer='https://m.facebook.com/',
+                        allow_redirects=True
+                    )
+                    
+                    # Check if we succeeded
+                    if self.session.has_cookie('c_user'):
+                        print("✅ Verification successful! Found c_user cookie.")
+                        return True
+                    
+                    if "home.php" in response.url or "welcome" in response.url:
+                        print("✅ Verification successful based on redirect!")
+                        return True
+                except Exception:
+                    continue
+            
+            print("❌ Could not complete verification with the provided code.")
+            return False
+            
+        except Exception as e:
+            print(f"Error processing verification code: {str(e)}")
             return False
     
     def handle_email_verification(self, response):
         """Handle email verification process"""
-        logger.info("Handling email verification...")
+        print("Handling email verification...")
         
         try:
             # Parse the current page to find if it's a code verification page
@@ -158,80 +258,11 @@ class VerificationHandler:
                 "check your email", "fb-", "code from your email"
             ])
             
-            logger.info(f"Is this a code verification page? {is_code_page}")
+            print(f"Is this a code verification page? {is_code_page}")
             
             if is_code_page:
-                # Notify user to check email
-                print("\n=== Email Verification Required ===")
-                print("Facebook has sent a verification code to your email.")
-                print("Please check your email and provide the verification code or link.")
-                
-                # Get verification code or link from user
-                verification_info = get_verification_info()
-                
-                if not verification_info:
-                    logger.error("No verification info provided by user")
-                    return False
-                
-                # Check if we got a verification link or code
-                if verification_info.startswith("http"):
-                    # We got a verification link
-                    logger.info("Using verification link...")
-                    
-                    # Add a small delay like a human would
-                    simulate_field_delay()
-                    
-                    verification_response = self.session.get(
-                        verification_info,
-                        referer='https://m.facebook.com/',
-                        allow_redirects=True
-                    )
-                    
-                    logger.info(f"Verification link response: {verification_response.status_code}")
-                    logger.info(f"Final URL after verification: {verification_response.url}")
-                    
-                    # Check if verification was successful
-                    if "home.php" in verification_response.url or "welcome" in verification_response.url:
-                        logger.info("Email verification successful!")
-                        return True
-                    else:
-                        # Check for c_user cookie as a sign of success
-                        if self.session.has_cookie('c_user'):
-                            logger.info("Found c_user cookie after verification. Likely successful.")
-                            return True
-                        else:
-                            logger.warning("Email verification link may not have worked.")
-                            
-                            # Try to find a form for code entry on the page
-                            verification_soup = BeautifulSoup(verification_response.text, 'html.parser')
-                            code_form = self._find_code_entry_form(verification_soup)
-                            
-                            if code_form:
-                                logger.info("Found code entry form after following verification link")
-                                
-                                # Ask for a new code if needed
-                                print("\nThe verification link didn't work completely. Facebook might be asking for the code directly.")
-                                new_code = input("If you have a verification code, enter it now (or press Enter to skip): ").strip()
-                                if new_code:
-                                    return self._submit_verification_code(code_form, verification_response.url, new_code)
-                            
-                            # Try another approach
-                            return False
-                else:
-                    # We got a verification code
-                    logger.info(f"Using verification code: {verification_info}")
-                    
-                    # Find code input form
-                    code_form = self._find_code_entry_form(soup)
-                    
-                    if code_form:
-                        logger.info("Found code entry form")
-                        return self._submit_verification_code(code_form, response.url, verification_info)
-                    else:
-                        logger.error("Could not find code input form")
-                        print("\nCouldn't find a form to submit the verification code.")
-                        print("The registration might still have succeeded. Try to login with your credentials.")
-                        return False
+                # We need a code, but we'll return account info with a callback
+                return "verification_required"
             else:
                 # Not a code page, so check for other verification options
                 verification_buttons = []
@@ -254,7 +285,7 @@ class VerificationHandler:
                             else:
                                 button_url = f"https://m.facebook.com/{button_url}"
                         
-                        logger.info(f"Clicking email verification button: {button_url}")
+                        print(f"Clicking email verification button: {button_url}")
                         
                         # Add a small delay like a human would
                         simulate_field_delay()
@@ -265,53 +296,15 @@ class VerificationHandler:
                             allow_redirects=True
                         )
                         
-                        logger.info(f"Button click response: {button_response.status_code}")
-                        logger.info(f"Button click final URL: {button_response.url}")
-                        
                         # Recursively handle this response
                         return self.handle_email_verification(button_response)
-                    
-                # If no buttons found, ask user for verification
-                print("\n=== Email Verification ===")
-                print("Facebook may have sent a verification email. Please check your email.")
-                print("If you received an email, provide the verification code or link.")
-                verification_info = get_verification_info()
                 
-                if verification_info and verification_info.startswith("http"):
-                    # We got a verification link
-                    logger.info("Using verification link...")
-                    
-                    verification_response = self.session.get(
-                        verification_info,
-                        referer='https://m.facebook.com/',
-                        allow_redirects=True
-                    )
-                    
-                    logger.info(f"Verification link response: {verification_response.status_code}")
-                    logger.info(f"Final URL after verification: {verification_response.url}")
-                    
-                    # Check if verification was successful
-                    if "home.php" in verification_response.url or "welcome" in verification_response.url:
-                        logger.info("Email verification successful!")
-                        return True
-                    else:
-                        # Check for c_user cookie as a sign of success
-                        if self.session.has_cookie('c_user'):
-                            logger.info("Found c_user cookie after verification. Likely successful.")
-                            return True
-                        else:
-                            logger.warning("Email verification link may not have worked.")
-                            return False
-                else:
-                    # No verification info or not a link
-                    logger.info("No verification info found or not a link")
-                    return False
+                # If no buttons found, we need a code from the user
+                return "verification_required"
                 
         except Exception as e:
-            logger.error(f"Error during email verification: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
-            return False
+            print(f"Error during email verification: {str(e)}")
+            return "verification_required"
     
     def _find_code_entry_form(self, soup):
         """Find a form for entering a verification code"""
@@ -340,43 +333,9 @@ class VerificationHandler:
         # If no specific code form found, look for any form
         return soup.find('form')
     
-    def _submit_verification_code(self, form, page_url, verification_code=None):
+    def _submit_verification_code(self, form, page_url, verification_code):
         """Submit a verification code form"""
-        logger.info("Submitting verification code...")
-        
-        # If we don't have a code yet, ask the user
-        if not verification_code:
-            print("\n=== Verification Code Required ===")
-            print("Please enter the verification code from your email:")
-            verification_code = input("Code: ").strip()
-            
-            if not verification_code:
-                logger.error("No verification code provided")
-                return False
-            
-            # If we got a link instead of a code, use the link directly
-            if verification_code.startswith("http"):
-                logger.info("Received a verification link instead of a code, using the link...")
-                
-                verification_response = self.session.get(
-                    verification_code,
-                    referer=page_url,
-                    allow_redirects=True
-                )
-                
-                logger.info(f"Verification link response: {verification_response.status_code}")
-                logger.info(f"Final URL after verification: {verification_response.url}")
-                
-                # Check if verification was successful
-                if "home.php" in verification_response.url or "welcome" in verification_response.url:
-                    logger.info("Email verification successful!")
-                    return True
-                elif self.session.has_cookie('c_user'):
-                    logger.info("Found c_user cookie after verification. Likely successful.")
-                    return True
-                else:
-                    logger.warning("Verification link may not have worked completely")
-                    return False
+        print("Submitting verification code...")
         
         # Extract form data
         form_data = {}
@@ -441,7 +400,7 @@ class VerificationHandler:
         simulate_submit_delay()
         
         # Submit the form
-        logger.info(f"Submitting verification code to {form_action}")
+        print(f"Submitting verification code to {form_action}")
         
         verification_submit = self.session.post(
             form_action,
@@ -451,16 +410,13 @@ class VerificationHandler:
         )
         
         # Check if we passed the verification
-        logger.info(f"Code submission response: {verification_submit.status_code}")
-        logger.info(f"Code submission final URL: {verification_submit.url}")
-        
         if "home.php" in verification_submit.url or "welcome" in verification_submit.url:
-            logger.info("Successfully verified with code!")
+            print("✅ Successfully verified with code!")
             return True
         else:
             # Check for c_user cookie as a sign of success
             if self.session.has_cookie('c_user'):
-                logger.info("Found c_user cookie after code verification. Likely successful.")
+                print("✅ Found c_user cookie after code verification. Success!")
                 return True
             
             # Check if we're being asked for another verification
@@ -468,25 +424,8 @@ class VerificationHandler:
                 # We might need another verification step
                 verification_soup = BeautifulSoup(verification_submit.text, 'html.parser')
                 if "another code" in verification_soup.get_text().lower() or "new code" in verification_soup.get_text().lower():
-                    logger.info("Facebook is asking for another code.")
-                    print("\n=== Another Verification Code Required ===")
-                    print("Facebook is asking for another verification code.")
-                    print("Please check your email for a new code and enter it:")
-                    
-                    # Get new code from user
-                    new_verification_code = input("Enter new verification code: ").strip()
-                    
-                    if new_verification_code:
-                        # Find the new code form
-                        new_code_form = self._find_code_entry_form(verification_soup)
-                        
-                        if new_code_form:
-                            return self._submit_verification_code(new_code_form, verification_submit.url, new_verification_code)
-                        else:
-                            logger.error("Could not find new code entry form")
-                            return False
-                    else:
-                        logger.error("No new verification code provided")
-                        return False
+                    print("Facebook is asking for another code.")
+                    return False
             
+            print("❌ Code verification did not fully succeed.")
             return False

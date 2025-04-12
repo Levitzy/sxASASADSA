@@ -76,6 +76,5 @@ class AccountGenerator:
             "device_id": self.device_id
         }
         
-        logger.info(f"Generated user data for {first_name} {last_name}")
         self.account_data = user_data
         return user_data

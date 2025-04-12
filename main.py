@@ -13,15 +13,14 @@ from account.generator import AccountGenerator
 from facebook.registration import FacebookRegistration
 from config import CONFIG
 
-# Set up logging
-logger = setup_logger("FBAccountCreator")
+# Set up logging with minimal output
+logger = setup_logger("FBAccountCreator", console_level="ERROR")
 
 def create_required_folders():
     """Create necessary folders for the application"""
-    folders = ['logs', 'accounts']
+    folders = ['logs']  # Removed 'accounts' folder
     for folder in folders:
         os.makedirs(folder, exist_ok=True)
-    logger.info("Required folders created")
 
 def try_with_proxy(proxy_manager, email, email_password, user_data, max_attempts=3):
     """Try to create an account with multiple proxies until success"""
@@ -30,10 +29,10 @@ def try_with_proxy(proxy_manager, email, email_password, user_data, max_attempts
         # Get a proxy for this attempt
         proxy = proxy_manager.get_proxy()
         if not proxy:
-            logger.error("Failed to get a valid proxy. Exiting...")
+            print("❌ Failed to get a valid proxy.")
             return False
         
-        logger.info(f"Attempt {attempt+1}/{max_attempts} using proxy: {proxy['ip']}:{proxy['port']}")
+        print(f"\n[{attempt+1}/{max_attempts}] Using proxy: {proxy['ip']}:{proxy['port']}")
         
         try:
             # Initialize Facebook registration with proxy and user data
@@ -49,43 +48,38 @@ def try_with_proxy(proxy_manager, email, email_password, user_data, max_attempts
             
             # If successful or partial account created, return the result
             if result:
-                logger.info(f"Account creation attempt {attempt+1} successful")
                 return result
                 
         except requests.exceptions.TooManyRedirects:
-            logger.error(f"Proxy {proxy['ip']}:{proxy['port']} caused too many redirects. Facebook may be blocking this proxy.")
-            # Remove this proxy from the working list
+            print(f"❌ Proxy connection issue - too many redirects.")
             proxy_manager.remove_current_proxy()
             
         except requests.exceptions.ConnectionError:
-            logger.error(f"Connection error with proxy {proxy['ip']}:{proxy['port']}. The proxy may be down.")
+            print(f"❌ Connection error with proxy.")
             proxy_manager.remove_current_proxy()
             
         except requests.exceptions.Timeout:
-            logger.error(f"Timeout with proxy {proxy['ip']}:{proxy['port']}. The proxy may be slow.")
+            print(f"❌ Timeout with proxy.")
             proxy_manager.remove_current_proxy()
             
         except Exception as e:
-            logger.error(f"Error with proxy {proxy['ip']}:{proxy['port']}: {str(e)}")
+            print(f"❌ Error: {str(e)}")
             proxy_manager.remove_current_proxy()
         
-        # Wait before trying the next proxy to avoid rate limiting
+        # Wait before trying the next proxy
         if attempt < max_attempts - 1:
-            delay = 5 + (attempt * 3)  # Increase delay with each failure
-            logger.info(f"Waiting {delay} seconds before trying the next proxy...")
+            delay = 3 + (attempt * 2)
+            print(f"Waiting {delay} seconds before trying the next proxy...")
             time.sleep(delay)
     
-    logger.error(f"All {max_attempts} proxy attempts failed")
+    print(f"\n❌ All {max_attempts} proxy attempts failed")
     return False
 
 def main():
     """Main function to start the Facebook account creation process"""
-    print("\n=== Facebook Account Creator - Enhanced Version ===")
-    print("This tool helps you create a Facebook account with your own temp email address.")
-    print("You'll need to have access to a temporary email service (like temp-mail.org, mail.tm, etc.)")
-    print("The script will guide you through the process and handle Facebook registration.\n")
-    
-    logger.info("Starting Facebook account creator")
+    print("\n=== Facebook Account Creator ===")
+    print("This tool creates a Facebook account with a temporary email address.")
+    print("You'll need access to the temporary email to receive the verification code.")
     
     # Create required folders
     create_required_folders()
@@ -94,16 +88,15 @@ def main():
         # Initialize the proxy manager
         proxy_manager = ProxyManager()
         if not proxy_manager.load_proxies():
-            logger.error("Failed to load proxies. Exiting...")
+            print("❌ Failed to load proxies. Exiting...")
             return
         
-        # Try to find working proxies first
-        if CONFIG.get("test_proxies_first", True):
-            print("Testing proxies to find working ones... (this may take a few minutes)")
-            proxy_manager.find_working_proxies(max_to_test=5)  # Test a few to save time
+        # Find working proxies
+        print("Testing proxies to find working ones...")
+        proxy_manager.find_working_proxies(max_to_test=5, silent=True)
             
-            if not proxy_manager.working_proxies:
-                print("\nNo working proxies found in initial test. Using all available proxies.")
+        if not proxy_manager.working_proxies:
+            print("No working proxies found in initial test. Using all available proxies.")
         
         # Create account generator with user data
         account_gen = AccountGenerator()
@@ -113,55 +106,64 @@ def main():
         from utils.user_input import get_user_email
         email, email_password = get_user_email()
         if not email:
-            logger.error("Failed to get valid email. Aborting.")
+            print("❌ No valid email provided. Aborting.")
             return
         
         # Try to create the account with multiple proxies if needed
         max_attempts = CONFIG.get("max_proxy_attempts", 3)
-        result = try_with_proxy(proxy_manager, email, email_password, user_data, max_attempts)
+        account_info = try_with_proxy(proxy_manager, email, email_password, user_data, max_attempts)
         
         # Process the result
-        if result and isinstance(result, dict) and result.get('success'):
-            logger.info("Account creation successful!")
-            print("\n=== Account Creation Successful! ===")
-            print(f"Account details saved to accounts/fb_account_{result['user_id']}_info.json")
-            print(f"\nAccount Information:")
-            print(f"- Name: {result['first_name']} {result['last_name']}")
-            print(f"- Email: {result['email']}")
-            print(f"- Facebook Password: {result['fb_password']}")
-            print(f"- User ID: {result['user_id']}")
-            print(f"- Gender: {result['gender']}")
-            print(f"- Birth Date: {result['birth_date']}")
-            print("\nYou can now log in to Facebook with these credentials.")
-        elif result and isinstance(result, dict):
-            # We got partial account info
-            logger.warning("Created partial account.")
-            print("\n=== Partial Account Created ===")
-            print("The account may require additional verification steps.")
-            print(f"\nPartial Account Information:")
-            print(f"- Name: {result['first_name']} {result['last_name']}")
-            print(f"- Email: {result['email']}")
-            print(f"- Facebook Password: {result['fb_password']}")
-            print(f"- Gender: {result['gender']}")
-            print(f"- Birth Date: {result['birth_date']}")
-            print("\nTry logging in to Facebook with these credentials and complete any remaining verification steps.")
-            
-            # Extra hint for users
-            print("\nTIP: Facebook might require additional verification when you log in for the first time.")
-            print("Try logging in from a web browser instead of the mobile app for easier verification.")
+        if account_info and isinstance(account_info, dict):
+            if account_info.get('verification_required', False):
+                print("\n=== Verification Required ===")
+                print("Please check your email for a verification code from Facebook")
+                
+                # Get verification code from user
+                fb_code = input("\nEnter FB code: ").strip()
+                
+                if fb_code:
+                    # Complete verification
+                    if account_info.get('verify_func') and callable(account_info.get('verify_func')):
+                        verify_func = account_info.get('verify_func')
+                        success = verify_func(fb_code)
+                        
+                        if success:
+                            print("\n✅ Account creation and verification successful!")
+                            print(f"\nAccount Information:")
+                            print(f"- Name: {account_info['first_name']} {account_info['last_name']}")
+                            print(f"- Email: {account_info['email']}")
+                            print(f"- Facebook Password: {account_info['password']}")
+                            print(f"- User ID: {account_info.get('user_id', 'Unknown')}")
+                            print("\nYou can now log in to Facebook with these credentials.")
+                        else:
+                            print("\n❌ Verification failed. Please try to log in manually.")
+                    else:
+                        print("\n❌ Could not complete verification. Please try to log in manually.")
+                else:
+                    print("\n❌ No verification code provided. Please try to log in manually.")
+            elif account_info.get('success'):
+                print("\n✅ Account creation successful!")
+                print(f"\nAccount Information:")
+                print(f"- Name: {account_info['first_name']} {account_info['last_name']}")
+                print(f"- Email: {account_info['email']}")
+                print(f"- Facebook Password: {account_info['password']}")
+                print(f"- User ID: {account_info.get('user_id', 'Unknown')}")
+                print("\nYou can now log in to Facebook with these credentials.")
+            else:
+                # Partial account info
+                print("\n⚠️ Account created but additional steps may be required.")
+                print(f"\nAccount Information:")
+                print(f"- Name: {account_info['first_name']} {account_info['last_name']}")
+                print(f"- Email: {account_info['email']}")
+                print(f"- Facebook Password: {account_info['password']}")
+                print("\nTry logging in to Facebook with these credentials and complete any verification steps.")
         else:
-            logger.error("Account creation failed")
-            print("\n=== Account Creation Failed ===")
-            print("Failed to create Facebook account after multiple attempts. Check the logs for details.")
-            print("You may need to try again with a different email or wait before retrying.")
+            print("\n❌ Account creation failed.")
+            print("Try again with a different email or wait before retrying.")
             
     except Exception as e:
-        logger.error(f"An unexpected error occurred: {str(e)}")
-        import traceback
-        logger.error(traceback.format_exc())
-        print("\n=== Error ===")
-        print(f"An unexpected error occurred: {str(e)}")
-        print("Check the logs for more details.")
+        print(f"\n❌ An unexpected error occurred: {str(e)}")
 
 if __name__ == "__main__":
     main()

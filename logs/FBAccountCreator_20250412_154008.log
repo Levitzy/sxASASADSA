@@ -1,0 +1,31 @@
+2025-04-12 15:40:08,202 - DEBUG - Logger initialized. Log file: C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\logs\FBAccountCreator_20250412_154008.log
+2025-04-12 15:40:08,203 - DEBUG - Loaded 5 working proxies from file
+2025-04-12 15:40:08,203 - DEBUG - Loaded 10 proxies from file
+2025-04-12 15:40:19,465 - DEBUG - Saved 5 working proxies to C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\proxies\working_proxies.txt
+2025-04-12 15:40:38,134 - DEBUG - Simulating page load delay of 0.98 seconds
+2025-04-12 15:40:40,799 - DEBUG - Simulating page load delay of 0.77 seconds
+2025-04-12 15:40:43,494 - DEBUG - Simulating page load delay of 1.00 seconds
+2025-04-12 15:40:44,497 - DEBUG - Simulating page load delay of 0.87 seconds
+2025-04-12 15:40:45,367 - DEBUG - Simulating field delay of 0.34 seconds
+2025-04-12 15:40:46,269 - DEBUG - Simulating page load delay of 1.12 seconds
+2025-04-12 15:40:47,399 - DEBUG - Simulating field delay of 0.46 seconds
+2025-04-12 15:40:48,349 - DEBUG - Simulating page load delay of 0.92 seconds
+2025-04-12 15:40:49,295 - DEBUG - Simulating field delay of 0.76 seconds
+2025-04-12 15:40:50,060 - DEBUG - Simulating field delay of 0.36 seconds
+2025-04-12 15:40:50,425 - DEBUG - Simulating field delay of 0.42 seconds
+2025-04-12 15:40:50,841 - DEBUG - Simulating field delay of 0.74 seconds
+2025-04-12 15:40:51,583 - DEBUG - Simulating field delay of 0.39 seconds
+2025-04-12 15:40:51,978 - DEBUG - Simulating field delay of 0.78 seconds
+2025-04-12 15:40:52,757 - DEBUG - Simulating submit delay of 0.80 seconds
+2025-04-12 15:41:01,626 - DEBUG - Simulating page load delay of 1.04 seconds
+2025-04-12 15:41:09,120 - DEBUG - Simulating page load delay of 0.81 seconds
+2025-04-12 15:41:12,428 - DEBUG - Simulating page load delay of 1.08 seconds
+2025-04-12 15:41:13,530 - DEBUG - Simulating field delay of 0.73 seconds
+2025-04-12 15:41:14,265 - DEBUG - Simulating field delay of 0.33 seconds
+2025-04-12 15:41:14,592 - DEBUG - Simulating field delay of 0.65 seconds
+2025-04-12 15:41:15,244 - DEBUG - Simulating field delay of 0.76 seconds
+2025-04-12 15:41:16,007 - DEBUG - Simulating field delay of 0.34 seconds
+2025-04-12 15:41:16,345 - DEBUG - Simulating field delay of 0.69 seconds
+2025-04-12 15:41:17,039 - DEBUG - Simulating submit delay of 0.85 seconds
+2025-04-12 15:41:18,260 - DEBUG - Simulating page load delay of 0.84 seconds
+2025-04-12 15:41:27,109 - DEBUG - Simulating page load delay of 0.96 seconds
