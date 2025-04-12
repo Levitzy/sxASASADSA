@@ -1,7 +1,0 @@
-2025-04-11 13:47:58,087 - INFO - Logger initialized. Log file: C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\logs\FBAccountCreator_20250411_134758.log
-2025-04-11 13:47:58,087 - INFO - Starting Facebook account creator
-2025-04-11 13:47:58,088 - INFO - Required folders created
-2025-04-11 13:47:58,089 - INFO - Fetching proxies from API
-2025-04-11 13:47:59,209 - INFO - Saved proxy list to C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\proxies\proxy_list.txt
-2025-04-11 13:47:59,210 - ERROR - Error loading proxies from file: too many values to unpack (expected 2)
-2025-04-11 13:47:59,210 - ERROR - Failed to load proxies. Exiting...
