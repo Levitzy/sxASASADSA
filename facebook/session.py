@@ -1,5 +1,5 @@
 """
-Session and cookie management for Facebook
+Enhanced session and cookie management for Facebook
 """
 
 import requests
@@ -8,6 +8,7 @@ import time
 import random
 import re
 import uuid
+import json
 from urllib.parse import urlparse, urljoin, unquote, parse_qs
 from config import get_random_user_agent, REQUEST_TIMEOUT, MAX_RETRIES
 from utils.helpers import simulate_page_load_delay
@@ -34,8 +35,8 @@ class FacebookSession:
         self.lsd = None
         self.datr_cookie = None
         
-        # Set reasonable redirect limits
-        self.session.max_redirects = 5
+        # Set higher redirect limits
+        self.session.max_redirects = 10
         
         # Configure the session with proxy if provided
         if proxy:
@@ -60,7 +61,6 @@ class FacebookSession:
         self.session.cookies.set("locale", "en_US", domain=".facebook.com", path="/")
         self.session.cookies.set("wd", f"{screen_width}x{screen_height}", domain=".facebook.com", path="/")
         self.session.cookies.set("dpr", "1.5", domain=".facebook.com", path="/")
-        self.session.cookies.set("fr", f"{browser_id}.{int(time.time())}.0.{random.random()}", domain=".facebook.com", path="/")
         
         # Generate a unique device ID that Facebook uses
         self.session.cookies.set("m_pixel_ratio", "1.5", domain=".facebook.com", path="/")
@@ -75,9 +75,26 @@ class FacebookSession:
             "Sec-Ch-Viewport-Width": str(screen_width),
             "Device-Memory": "8",
         })
+        
+        # Add additional browser characteristics
+        self.session.cookies.set("presence", f"{random.randint(1000000, 9999999)}", domain=".facebook.com", path="/")
+        self.session.cookies.set("sb", self._generate_random_cookie_value(24), domain=".facebook.com", path="/")
+        
+        # Create datr cookie which Facebook uses for browser identification
+        self.datr_cookie = self._generate_random_cookie_value(24)
+        self.session.cookies.set("datr", self.datr_cookie, domain=".facebook.com", path="/")
+        
+        # Set fr cookie with browser identification
+        fr_cookie = f"{browser_id}.{int(time.time())}.0.{random.random()}"
+        self.session.cookies.set("fr", fr_cookie, domain=".facebook.com", path="/")
+    
+    def _generate_random_cookie_value(self, length=24):
+        """Generate a random cookie value similar to what Facebook uses"""
+        charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+        return ''.join(random.choice(charset) for _ in range(length))
     
     def _handle_fb_redirects(self, response, **kwargs):
-        """Handle Facebook app redirects"""
+        """Handle Facebook app redirects with improved handling"""
         # Update current URL
         self.current_url = response.url
         
@@ -112,7 +129,7 @@ class FacebookSession:
                         # Replace the original response with our new one
                         return new_response
                 except Exception as e:
-                    pass
+                    logger.debug(f"Error handling fbredirect: {str(e)}")
             
             # Check for Facebook mobile site redirects to desktop or other formats
             elif redirect_url.startswith('https://facebook.com/') or redirect_url.startswith('https://www.facebook.com/'):
@@ -138,7 +155,7 @@ class FacebookSession:
                         # Replace the original response with our new one
                         return new_response
                     except Exception as e:
-                        pass
+                        logger.debug(f"Error handling mobile redirect: {str(e)}")
             
             # Handle checkpoint redirects
             elif 'checkpoint' in redirect_url:
@@ -157,7 +174,7 @@ class FacebookSession:
                     
                     return new_response
                 except Exception as e:
-                    pass
+                    logger.debug(f"Error handling checkpoint redirect: {str(e)}")
         
         # Try to extract DTSG and LSD tokens from any response
         self._extract_facebook_tokens(response)
@@ -177,12 +194,37 @@ class FacebookSession:
                 if dtsg_match:
                     self.fb_dtsg = dtsg_match.group(1)
                 
+                # Also try this pattern
+                dtsg_alt_match = re.search(r'name="fb_dtsg" value="([^"]+)"', response.text)
+                if dtsg_alt_match and not self.fb_dtsg:
+                    self.fb_dtsg = dtsg_alt_match.group(1)
+                
                 # Try to find LSD
                 lsd_match = re.search(r'name="lsd" value="([^"]+)"', response.text)
                 if lsd_match:
                     self.lsd = lsd_match.group(1)
-        except Exception:
-            pass
+                
+                # Alternate LSD pattern
+                lsd_alt_match = re.search(r'"LSD",\[\],{"token":"([^"]+)"', response.text)
+                if lsd_alt_match and not self.lsd:
+                    self.lsd = lsd_alt_match.group(1)
+                    
+                # Try to extract tokens from script blocks
+                for script_match in re.finditer(r'<script[^>]*>(.*?)</script>', response.text, re.DOTALL):
+                    script_content = script_match.group(1)
+                    
+                    # Look for token definitions in JavaScript
+                    if not self.fb_dtsg:
+                        fb_dtsg_js = re.search(r'DTSGInitialData["\']?\s*,\s*(?:\{\s*token\s*:\s*|["\'])([^"\']+)', script_content)
+                        if fb_dtsg_js:
+                            self.fb_dtsg = fb_dtsg_js.group(1)
+                    
+                    if not self.lsd:
+                        lsd_js = re.search(r'LSD["\']?\s*,\s*(?:\{\s*token\s*:\s*|["\'])([^"\']+)', script_content)
+                        if lsd_js:
+                            self.lsd = lsd_js.group(1)
+        except Exception as e:
+            logger.debug(f"Error extracting tokens: {str(e)}")
     
     def _store_important_cookies(self):
         """Store important cookies for later use"""
@@ -193,7 +235,7 @@ class FacebookSession:
             self.datr_cookie = cookies['datr']
     
     def _configure_proxy(self, proxy):
-        """Configure the session to use a proxy"""
+        """Configure the session to use a proxy with improved handling"""
         if not proxy:
             return
 
@@ -231,6 +273,8 @@ class FacebookSession:
                     'http': proxy,
                     'https': proxy
                 })
+                
+            logger.debug(f"Configured proxy: {self.session.proxies}")
         except Exception as e:
             print(f"Error configuring proxy: {str(e)}")
     
@@ -255,7 +299,7 @@ class FacebookSession:
             'Dnt': '1'
         }
     
-    def get(self, url, headers=None, allow_redirects=True, referer=None, timeout=None, max_redirects=5):
+    def get(self, url, headers=None, allow_redirects=True, referer=None, timeout=None, max_redirects=10):
         """Make a GET request with retries and error handling"""
         if timeout is None:
             timeout = REQUEST_TIMEOUT
@@ -284,6 +328,9 @@ class FacebookSession:
         
         for attempt in range(MAX_RETRIES):
             try:
+                # Add jitter to request timing to seem more human
+                time.sleep(random.uniform(0.1, 0.3))
+                
                 response = self.session.get(
                     url,
                     headers=headers,
@@ -309,9 +356,48 @@ class FacebookSession:
                 return response
                 
             except requests.exceptions.TooManyRedirects as e:
-                # Restore original redirect setting
-                self.session.max_redirects = original_max_redirects
-                raise
+                logger.debug(f"Too many redirects for URL: {url}. Trying alternative approach.")
+                
+                # Try again with alternate approach for Facebook redirect issues
+                try:
+                    # Use a direct mobile URL approach
+                    if 'facebook.com' in url:
+                        # Use m.facebook.com instead
+                        mobile_url = url.replace('www.facebook.com', 'm.facebook.com')
+                        mobile_url = mobile_url.replace('facebook.com', 'm.facebook.com')
+                        
+                        # Only follow a single redirect
+                        single_redirect_response = self.session.get(
+                            mobile_url,
+                            headers=headers,
+                            allow_redirects=False,
+                            timeout=timeout
+                        )
+                        
+                        # Restore original redirect setting
+                        self.session.max_redirects = original_max_redirects
+                        
+                        if single_redirect_response.status_code < 300 or single_redirect_response.status_code >= 400:
+                            # Not a redirect, return this response
+                            return single_redirect_response
+                        
+                        # Extract redirect URL and try one more time
+                        if 'location' in single_redirect_response.headers:
+                            redirect_url = single_redirect_response.headers['location']
+                            final_response = self.session.get(
+                                redirect_url,
+                                headers=headers,
+                                allow_redirects=False,
+                                timeout=timeout
+                            )
+                            return final_response
+                        
+                        return single_redirect_response
+                except Exception:
+                    # Restore original redirect setting
+                    self.session.max_redirects = original_max_redirects
+                    # Re-raise original exception if our alternative approach fails
+                    raise e
                 
             except requests.exceptions.InvalidSchema as e:
                 # This happens with fbredirect:// protocol
@@ -402,6 +488,11 @@ class FacebookSession:
         headers['X-FB-Connection-Quality'] = 'EXCELLENT'
         headers['X-FB-Connection-Bandwidth'] = str(random.randint(5000000, 10000000))
         headers['X-FB-Device-Group'] = str(random.randint(1000, 9999))
+        headers['X-FB-Friendly-Name'] = 'unknown'
+        
+        # Facebook Android app specific headers
+        headers['X-FB-Client-IP'] = 'True'
+        headers['X-FB-Server-Cluster'] = 'True'
         
         # Make it look like the Facebook app for login
         if 'login' in parsed_url.path:
@@ -409,7 +500,7 @@ class FacebookSession:
         elif 'reg' in parsed_url.path:
             headers['X-FB-Friendly-Name'] = 'RegMobilePage'
     
-    def post(self, url, data=None, headers=None, allow_redirects=True, referer=None, timeout=None, max_redirects=5):
+    def post(self, url, data=None, headers=None, extra_headers=None, allow_redirects=True, referer=None, timeout=None, max_redirects=10):
         """Make a POST request with retries and error handling"""
         if timeout is None:
             timeout = REQUEST_TIMEOUT
@@ -434,14 +525,16 @@ class FacebookSession:
         # Add anti-detection headers for Facebook
         headers['X-FB-Friendly-Name'] = 'MobileRegistrationCore'
         
-        # Add Facebook tokens if available
-        if self.fb_dtsg and 'fb_dtsg' not in data:
-            if isinstance(data, dict):
-                data['fb_dtsg'] = self.fb_dtsg
+        # Add any extra headers provided
+        if extra_headers:
+            headers.update(extra_headers)
         
-        if self.lsd and 'lsd' not in data:
-            if isinstance(data, dict):
-                data['lsd'] = self.lsd
+        # Add Facebook tokens if available
+        if self.fb_dtsg and isinstance(data, dict) and 'fb_dtsg' not in data:
+            data['fb_dtsg'] = self.fb_dtsg
+        
+        if self.lsd and isinstance(data, dict) and 'lsd' not in data:
+            data['lsd'] = self.lsd
                 
         # Add device info
         self._add_facebook_specific_headers(headers, parsed_url)
@@ -454,6 +547,9 @@ class FacebookSession:
         
         for attempt in range(MAX_RETRIES):
             try:
+                # Add jitter to request timing to seem more human
+                time.sleep(random.uniform(0.1, 0.3))
+                
                 response = self.session.post(
                     url,
                     data=data,
@@ -480,20 +576,52 @@ class FacebookSession:
                 return response
                 
             except requests.exceptions.TooManyRedirects as e:
-                # Restore original redirect setting
-                self.session.max_redirects = original_max_redirects
-                raise
+                logger.debug(f"Too many redirects for POST to URL: {url}. Trying alternative approach.")
+                
+                # Try a different approach for Facebook redirect issues
+                try:
+                    # Use a direct mobile URL approach
+                    if 'facebook.com' in url:
+                        # Try direct API endpoint
+                        if 'reg' in url:
+                            direct_url = "https://m.facebook.com/reg/submit/?cid=103"
+                        elif 'login' in url:
+                            direct_url = "https://m.facebook.com/login/device-based/regular/login/?cid=103"
+                        else:
+                            direct_url = url
+                            
+                        new_headers = headers.copy()
+                        new_headers['Host'] = urlparse(direct_url).netloc
+                        
+                        # Only follow a single redirect
+                        single_redirect_response = self.session.post(
+                            direct_url,
+                            data=data,
+                            headers=new_headers,
+                            allow_redirects=False,
+                            timeout=timeout
+                        )
+                        
+                        # Restore original redirect setting
+                        self.session.max_redirects = original_max_redirects
+                        
+                        return single_redirect_response
+                except Exception:
+                    # Restore original redirect setting
+                    self.session.max_redirects = original_max_redirects
+                    # Re-raise original exception if our alternative approach fails
+                    raise e
             
             except requests.exceptions.InvalidSchema as e:
                 # This happens with fbredirect:// protocol
                 
                 # Try to directly post to the regular submission URL
                 try:
-                    submit_url = "https://www.facebook.com/reg/submit/"
+                    submit_url = "https://m.facebook.com/reg/submit/"
                     
                     new_headers = headers.copy()
-                    new_headers['Host'] = 'www.facebook.com'
-                    new_headers['Origin'] = 'https://www.facebook.com'
+                    new_headers['Host'] = 'm.facebook.com'
+                    new_headers['Origin'] = 'https://m.facebook.com'
                     
                     response = self.session.post(
                         submit_url,
@@ -553,9 +681,27 @@ class FacebookSession:
         """Set a cookie in the session"""
         self.session.cookies.set(name, value, domain=domain, path=path)
         
-    def clear_cookies(self):
-        """Clear all cookies in the session"""
-        self.session.cookies.clear()
+    def clear_cookies(self, preserve_fingerprint=False):
+        """Clear all cookies in the session but maintain browser fingerprint if requested"""
+        if preserve_fingerprint:
+            # Save important fingerprinting cookies
+            fingerprint_cookies = {}
+            for cookie_name in ['datr', 'sb', 'locale', 'wd', 'dpr', 'fr']:
+                if self.has_cookie(cookie_name):
+                    fingerprint_cookies[cookie_name] = self.get_cookie(cookie_name)
+            
+            # Clear all cookies
+            self.session.cookies.clear()
+            
+            # Restore fingerprinting cookies
+            for name, value in fingerprint_cookies.items():
+                self.set_cookie(name, value)
+        else:
+            # Clear all cookies
+            self.session.cookies.clear()
+            
+            # Setup browser state again
+            self._setup_browser_state()
         
     def update_user_agent(self, user_agent=None):
         """Update the user agent"""
@@ -567,4 +713,21 @@ class FacebookSession:
     
     def wait_after_creation(self, seconds=5):
         """Wait after account creation to let Facebook process changes"""
-        time.sleep(seconds)
+        # Add some jitter to the wait time to make it look more natural
+        jittered_time = seconds + random.uniform(-0.5, 1.5)
+        time.sleep(max(1, jittered_time))
+        
+    def get_cookies_json(self):
+        """Return cookies in JSON format for saving"""
+        cookies = []
+        for cookie in self.session.cookies:
+            cookies.append({
+                'name': cookie.name,
+                'value': cookie.value,
+                'domain': cookie.domain,
+                'path': cookie.path,
+                'expires': cookie.expires,
+                'secure': cookie.secure,
+                'httpOnly': cookie.has_nonstandard_attr('httponly')
+            })
+        return json.dumps(cookies)

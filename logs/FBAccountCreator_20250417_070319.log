@@ -1,0 +1,12 @@
+2025-04-17 07:03:19,513 - DEBUG - Logger initialized. Log file: C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\logs\FBAccountCreator_20250417_070319.log
+2025-04-17 07:03:19,514 - DEBUG - Loaded 5 working proxies from file
+2025-04-17 07:03:19,515 - DEBUG - Loaded 10 proxies from file
+2025-04-17 07:03:30,854 - DEBUG - Saved 5 working proxies to C:\Users\FLORES\OneDrive\Documents\2025\react2025\fb\proxies\working_proxies.txt
+2025-04-17 07:03:35,809 - DEBUG - Configured proxy: {'http': 'http://vazobmnp:bzcazvl7en9k@185.199.231.45:8382', 'https': 'http://vazobmnp:bzcazvl7en9k@185.199.231.45:8382'}
+2025-04-17 07:03:38,891 - DEBUG - Simulating page load delay of 1.12 seconds
+2025-04-17 07:03:45,931 - DEBUG - Too many redirects for URL: https://www.facebook.com/. Trying alternative approach.
+2025-04-17 07:03:47,007 - DEBUG - Error during enhanced session warm-up: Exceeded 3 redirects.
+2025-04-17 07:03:48,028 - DEBUG - Simulating page load delay of 0.51 seconds
+2025-04-17 07:03:54,285 - DEBUG - Simulating page load delay of 0.67 seconds
+2025-04-17 07:03:58,059 - DEBUG - Simulating page load delay of 0.62 seconds
+2025-04-17 07:04:43,662 - DEBUG - Simulating page load delay of 1.00 seconds
